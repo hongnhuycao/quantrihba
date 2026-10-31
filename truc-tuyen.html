@@ -1849,7 +1849,7 @@ return {view,setHd:v=>{S.hd=v;ls.set("gd.hd",v);},load:()=>{if(mcp)loadAll();},l
  Không đưa vào bản xem (snapshot): chỉ người mở app bằng tài khoản Google có quyền xem file này mới thấy. */
 const HR_SID="1lcZyYSNUoGdEsaYTXqi7rblJw-IzDB5aF7dVIQgHLVE",HR_URL="https://docs.google.com/spreadsheets/d/"+HR_SID+"/edit";
 const HR_RANGES={phep:"'Phep'!A5:Q200",nghi:"'Import_NghiPhep'!A2:AF5000",tc:"'Import_TangCa'!A2:M5000",cc:"'ChamCong'!A1:I6000",task:"'importrangeData'!A3:R9000",droplist:"'Droplist'!C2:N300",ngaynghi:"'NgayNghi'!A1:B400"};
-const HR_LATE="08:00";
+const HR_LATE="08:00",HR_NO_CC=["Nguyễn Lâm Thế Quân","Nguyễn Minh Ngọc","Vũ Ngọc Tuấn"]/* không dùng máy chấm công */;
 S.ns=S.ns||{data:{},loading:false,err:null,tried:false,month:"",tab:"hn",per:""};
 async function nsLoad(){if(!mcp||S.ns.loading)return;S.ns.loading=true;S.ns.tried=true;S.ns.err=null;render();
  for(const k of Object.keys(HR_RANGES)){try{S.ns.data[k]=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:HR_SID,range:HR_RANGES[k]},{cache:false}));}catch(e){S.ns.err=e;break;}}
@@ -1873,13 +1873,13 @@ function nsDd(d){return d?String(d.getDate()).padStart(2,"0")+"/"+String(d.getMo
 function nsSummary(){const t0=d0(new Date()),NV=NS_NV(),N=NS_NGHI(),CC=NS_CC(),TC=NS_TC(),ym=nsMonth();
  const off=N.filter(x=>x.tt!=="Không đồng ý"&&x.tu<=t0&&(x.den||x.tu)>=t0);
  const ccT=CC.filter(x=>+x.d===+t0),first={};ccT.forEach(x=>{const m=nsHM(x.gio);if(m==null)return;if(!first[x.key]||m<first[x.key].m)first[x.key]={m,gio:x.gio,ten:x.ten,gc:x.gc};});
- const offK=new Set(off.map(x=>x.key));const noCC=NV.filter(v=>!first[v.key]&&!offK.has(v.key));
+ const offK=new Set(off.map(x=>x.key)),skip=new Set(HR_NO_CC.map(nsKey)),NVcc=NV.filter(v=>!skip.has(v.key));const noCC=NVcc.filter(v=>!first[v.key]&&!offK.has(v.key));
  const late=Object.values(first).filter(x=>x.m>nsHM(HR_LATE)).sort((a,b)=>b.m-a.m);
  const yr=t0.getFullYear(),used={},unpaid={};N.filter(x=>x.tu.getFullYear()===yr&&x.tt!=="Không đồng ý"&&x.tt!=="Không hợp lệ").forEach(x=>{if(x.loai==="Nghỉ phép")used[x.key]=(used[x.key]||0)+x.gio/8;if(x.loai==="Không lương")unpaid[x.key]=(unpaid[x.key]||0)+x.gio/8;});
  const phep=NV.map(v=>({...v,used:used[v.key]||0,unpaid:unpaid[v.key]||0,con:v.tong-(used[v.key]||0)}));
  const tcM=TC.filter(x=>nsInMonth(x.d,ym)),tcH=tcM.reduce((s,x)=>s+x.gio,0);
  const pend=N.filter(x=>x.tt==="Chờ cấp trưởng"&&x.tu>=addD(t0,-30));
- return {t0,NV,off,first,ccT,noCC,late,phep,tcM,tcH,pend,ym};}
+ return {t0,NV,NVcc,off,first,ccT,noCC,late,phep,tcM,tcH,pend,ym};}
 function nsLoadingHtml(){
  if(!mcp)return '<div class="msg"><b>Phần nhân sự cần kết nối Google Sheets</b><span>Dữ liệu nhân sự chỉ đọc trực tiếp từ file nghỉ phép, phiếu công việc bằng tài khoản Google của người xem, không lưu vào bản xem.</span></div>';
  if(S.ns.err)return '<div class="alert bad"><b>Không đọc được file nhân sự</b><span>'+esc(errText(S.ns.err))+' Kiểm tra tài khoản Google đang kết nối có quyền xem file “HBA-Nghi Phep_Phieu Cong Viec”.</span><div><button class="btn sm" type="button" data-ns="reload">Thử lại</button></div></div>';
@@ -1909,15 +1909,15 @@ function nsLateSec(){const t0=d0(new Date()),day=S.ns.ccDay?d0(new Date(S.ns.ccD
  h+='<div class="card io-card"><div class="io-sum">'+kinds.map(k=>'<span class="pill '+tone(k)+'">'+esc(k)+' · '+c(k)+'</span>').join("")+'</div>'+
   L.map(x=>'<div class="io-r"><span class="io-n">'+esc(x.ten)+'</span><span class="pill '+tone(x.loai)+'">'+esc(x.loai)+'</span><b class="io-g">'+esc(x.gio)+'</b>'+(x.note?'<span class="io-note">'+esc(x.note)+'</span>':'')+'</div>').join("")+'</div></section>';
  return h;}
-function nsHomNay(X){const N=X.NV.length,cc=Object.keys(X.first).length;
+function nsHomNay(X){const N=X.NVcc.length,cc=Object.keys(X.first).length;
  let h='<section class="sec"><div class="kpi4">'+
-  '<div class="card kpi neu"><span class="k">Đã chấm công hôm nay</span><span class="v">'+cc+'/'+N+'</span><span class="n">nhân viên trong bảng phép</span></div>'+
+  '<div class="card kpi neu"><span class="k">Đã chấm công hôm nay</span><span class="v">'+cc+'/'+N+'</span><span class="n">người dùng máy chấm công</span></div>'+
   '<div class="card kpi '+(X.off.length?'warn':'ok')+'"><span class="k">Nghỉ hôm nay</span><span class="v">'+X.off.length+'</span><span class="n">theo phiếu nghỉ</span></div>'+
   (()=>{const t0=X.t0,a=addD(t0,-((t0.getDay()+6)%7)),b=addD(a,6),L=NS_NGHI().filter(x=>x.tt!=="Không đồng ý"&&x.tt!=="Không hợp lệ"&&x.tu<=b&&(x.den||x.tu)>=a),P=new Set(L.map(x=>x.key));return '<div class="card kpi '+(P.size?'warn':'ok')+'"><span class="k">Nghỉ trong tuần này</span><span class="v">'+P.size+' người</span><span class="n">'+L.length+' phiếu nghỉ</span></div>';})()+
   '<div class="card kpi '+(X.pend.length?'warn':'ok')+'"><span class="k">Phiếu nghỉ chờ cấp trưởng</span><span class="v">'+X.pend.length+'</span><span class="n">trong 30 ngày qua</span></div></div></section>';
  h+='<section class="sec"><div class="sec-h"><h2>Nghỉ hôm nay</h2></div><div class="card">'+(X.off.length?X.off.map(x=>'<div class="task"><div class="ic doc">'+esc(nsShow(x.ten).split(" ").pop().slice(0,2).toUpperCase())+'</div><div class="a">'+esc(nsShow(x.ten))+'</div><div class="b">'+esc(x.loai)+' · '+nsDd(x.tu)+' '+esc(x.tuG.slice(0,5))+' → '+nsDd(x.den)+' '+esc(x.denG.slice(0,5))+(x.gio?' · '+(x.gio/8).toLocaleString("vi-VN",{maximumFractionDigits:2})+' ngày':'')+'</div><div class="c">'+nsPill(x.tt)+'</div></div>').join(""):'<div class="done">✓ Không ai nghỉ hôm nay.</div>')+'</div></section>';
  h+=nsLateSec();
- h+='<section class="sec"><div class="sec-h"><h2>Chưa chấm công hôm nay · '+X.noCC.length+'</h2><span class="sub">Không tính người có phiếu nghỉ</span></div><div class="card">'+(X.noCC.length?'<div class="ns-chips">'+X.noCC.map(v=>'<span class="ns-chip">'+esc(nsShow(v.ten))+'</span>').join("")+'</div>':'<div class="done">✓ Mọi người đã chấm công.</div>')+'</div></section>';
+ h+='<section class="sec"><div class="sec-h"><h2>Chưa chấm công hôm nay · '+X.noCC.length+'</h2><span class="sub">Không tính người có phiếu nghỉ và 3 người không chấm công (Thế Quân, Minh Ngọc, Ngọc Tuấn)</span></div><div class="card">'+(X.noCC.length?'<div class="ns-chips">'+X.noCC.map(v=>'<span class="ns-chip">'+esc(nsShow(v.ten))+'</span>').join("")+'</div>':'<div class="done">✓ Mọi người đã chấm công.</div>')+'</div></section>';
  h+=lnCal();
  if(X.pend.length)h+='<section class="sec"><div class="sec-h"><h2>Phiếu nghỉ chờ cấp trưởng quyết định</h2></div><div class="card">'+X.pend.map(x=>'<div class="task"><div class="ic wait">?</div><div class="a">'+esc(nsShow(x.ten))+'</div><div class="b">'+esc(x.loai)+' · '+nsDd(x.tu)+(x.den&&+x.den!==+x.tu?' → '+nsDd(x.den):'')+(x.truong?' · cấp trưởng '+esc(x.truong):'')+'</div><div class="c">'+nsPill(x.tt)+'</div></div>').join("")+'</div></section>';
  return h;}
@@ -1958,7 +1958,7 @@ function nsCEO(){nsEnsure();let h='<section class="sec"><div class="grp-h"><h2>5
  if(!S.ns.data.phep||S.ns.loading||S.ns.err)return h+nsLoadingHtml()+'</section>';
  const X=nsSummary(),neg=X.phep.filter(p=>p.con<0).length,T=NS_TASK().filter(x=>x.bd<=X.t0&&x.kt>=X.t0);
  return h+'<div class="kpi4">'+
-  '<div class="card kpi neu"><span class="k">Có mặt (đã chấm công)</span><span class="v">'+Object.keys(X.first).length+'/'+X.NV.length+'</span><span class="n">'+X.off.length+' người nghỉ có phiếu</span></div>'+
+  '<div class="card kpi neu"><span class="k">Có mặt (đã chấm công)</span><span class="v">'+Object.keys(X.first).length+'/'+X.NVcc.length+'</span><span class="n">'+X.off.length+' người nghỉ có phiếu</span></div>'+
   '<div class="card kpi neu"><span class="k">Tăng ca tháng này</span><span class="v">'+(Math.round(X.tcH*10)/10).toLocaleString("vi-VN")+' giờ</span><span class="n">'+X.tcM.length+' phiếu</span></div>'+
   '<div class="card kpi neu"><span class="k">Việc đang thực hiện</span><span class="v">'+T.length+'</span><span class="n">theo phiếu công việc</span></div>'+
   '<div class="card kpi '+(neg?'bad':'ok')+'"><span class="k">Âm phép năm</span><span class="v">'+neg+' người</span><span class="n">'+X.pend.length+' phiếu nghỉ chờ duyệt</span></div></div></section>';}
