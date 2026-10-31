@@ -669,6 +669,7 @@ body[data-role="gd"] main,body[data-role="ns"] main{padding-bottom:40px}
 @media (max-width:759px){body[data-role="kt"] .subbar{display:none}}
 @media (min-width:1280px){.subtabs{max-width:1680px}}
 body[data-role="pc"][data-pcv="grid"] .subtabs{max-width:none}
+@media (min-width:760px){.th-segwrap{display:none}.subtabs{flex-wrap:wrap;row-gap:4px}.subtabs .grp{flex-wrap:wrap}.subtabs button{padding:7px 9px}}
 </style>
 
 <header class="top"><div class="nameband" aria-label="Nhuy Cao"><span class="sp"></span><span class="nm">Nhuy Cao</span><span class="sp"></span></div><div class="top-in">
@@ -698,10 +699,10 @@ const TP_HAN=15;
 const LOG_SHEET="Nhật ký app";
 const VIEWS=[
  {id:"hom-nay",name:"Hôm nay",ic:'<path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/>'},
+ {id:"ghi-so",name:"Ghi sổ",ic:'<path d="M5 4h11l3 3v13H5zM9 12h6M12 9v6"/>'},
  {id:"hop-dong",name:"Hợp đồng",ic:'<path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h4"/>'},
  {id:"ho-so",name:"Hồ sơ TT",ic:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 14h7M9 17h4"/><path d="M15 3v4h4"/>'},
  {id:"thau-phu",name:"Thầu phụ",ic:'<path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16.5 5.2a3 3 0 0 1 0 5.6M21 20c0-2.6-1.6-4.8-4-5.6"/>'},
- {id:"ghi-so",name:"Ghi sổ",ic:'<path d="M5 4h11l3 3v13H5zM9 12h6M12 9v6"/>'},
  {id:"ke-hoach",name:"Kế hoạch",ic:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6"/>'},
  {id:"tong-hop",name:"Báo cáo",ic:'<circle cx="8" cy="9" r="5"/><circle cx="17" cy="15" r="4"/><circle cx="8" cy="18.5" r="2.5"/>'}
 ];
@@ -737,7 +738,7 @@ async function snapLoad(){S.snapLoading=true;S.snapErr="";render();const d=await
  S.snapLoading=false;render();}
 function snapFallback(){if(S.snapTried)return;const ks=Object.keys(RANGES);if(ks.some(k=>S.data[k]&&!S.err[k]))return;if(!ks.every(k=>S.err[k]&&DENY.includes(S.err[k].code)&&S.err[k].code!=="approval_required"))return;S.snapTried=true;snapLoad();}
 const ls={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-S.role=ls.get("hba.role")||"kt";S.hd=ls.get("hba.hd");S.tp=ls.get("hba.tp");S.per=ls.get("hba.per")||"hom-nay";S.thTab=ls.get("hba.th")||"qt";S.khTab=ls.get("hba.kh")||"tq";{const b=ls.get("hba.cfBal");S.cfBal=b===""?null:num(b);S.cfFix=num(ls.get("hba.cfFix"));}
+S.role=ls.get("hba.role")||"kt";S.hd=ls.get("hba.hd");S.tp=ls.get("hba.tp");S.per=ls.get("hba.per")||"hom-nay";S.thTab=ls.get("hba.th")||"bc";S.khTab=ls.get("hba.kh")||"tq";{const b=ls.get("hba.cfBal");S.cfBal=b===""?null:num(b);S.cfFix=num(ls.get("hba.cfFix"));}
 
 /* ---------- tiện ích ---------- */
 function newForm(){return {kind:"",loai:"",hd:"",tpn:"",ct:"",nhom:"",ngay:today(),tien:"",dt:"",nd:"",vat:"",gc:"",err:""};}
@@ -845,20 +846,21 @@ function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hid
 function stamp(){const ks=Object.keys(RANGES),ok=ks.filter(k=>S.data[k]);if(S.snap)return "Bản chỉ xem · số liệu lúc "+fmtAt(S.snap.at);if(S.snapLoading)return "Đang tải bản xem…";if(S.noMcp)return S.snapErr?"Chưa có số liệu để xem":"Đang tải bản xem…";if(!ok.length)return "Đang tải từ Google Sheet…";const d=new Date(Math.min(...ok.map(k=>S.stamp[k]||Date.now())));return "Cập nhật "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+(ok.length<ks.length?" · đang tải thêm":" · từ Google Sheet");}
 function todoCount(){const D=DN(),T=DTP(),O=DOT();return D.filter(x=>x.tt==="Chưa gửi CĐT").length+O.filter(x=>x.tt==="Đạt ĐK – chưa đề nghị").length+D.filter(x=>x.qh>0&&x.con>1).length+T.filter(x=>x.han>1).length;}
 function nav(){const c=S.data.dn&&S.data.dtp?todoCount():0;
- const cur=S.view==="hd-moi"?"hop-dong":S.view==="viec-xong"?"hom-nay":S.view;
+ const cur=S.view==="hd-moi"?"hop-dong":S.view==="viec-xong"?"hom-nay":S.view;const curT=S.view==="tong-hop"?"th-"+(S.thTab||"bc"):cur;
  document.getElementById("bnav").innerHTML=VIEWS.map(v=>'<button type="button" data-go="'+v.id+'"'+(cur===v.id?' aria-current="page"':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+v.ic+'</svg>'+v.name+(v.id==="hom-nay"&&c?'<span class="badge">'+c+'</span>':'')+'</button>').join("");
  const sb=document.getElementById("subbar"),tt=document.getElementById("toptabs"),role=S.role==="dn"?(ls.get("hba.dnsub")||"gd"):S.role;
  if(role==="ceo"){sb.hidden=true;tt.innerHTML="";return;}
  sb.hidden=false;
  if(DN_SUB.includes(role)){tt.innerHTML='<span class="crumb">Dự án &amp; Nhân sự ›</span><span class="grp">'+[["gd","Dự án"],["pc","Phân công"],["ns","Nhân sự"]].map(t=>'<button type="button" data-role="'+t[0]+'"'+(role===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>').join("")+'</span>';return;}
- const nm=id=>VIEWS.find(v=>v.id===id)?VIEWS.find(v=>v.id===id).name:"Danh mục";
- const B=(id,no)=>'<button type="button" data-go="'+id+'"'+(cur===id?' aria-current="page"':'')+'>'+(no?'<span class="no">'+no+'</span>':'')+nm(id)+(id==="hom-nay"&&c?' ('+c+')':'')+'</button>';
- const flow=["hop-dong","ho-so","thau-phu","ghi-so"].map((id,i)=>B(id,i+1)).join('<span class="arr">›</span>');
- tt.innerHTML='<span class="crumb">Tài chính &amp; Hợp đồng ›</span>'+
-  '<span class="grp"><span class="gl">Việc</span>'+B("hom-nay")+'</span>'+
-  '<span class="grp"><span class="gl">Nghiệp vụ</span>'+flow+'</span>'+
-  '<span class="grp"><span class="gl">Theo dõi</span>'+B("ke-hoach")+B("tong-hop")+'</span>'+
-  '<span class="grp"><span class="gl">Thiết lập</span>'+B("danh-muc")+'</span>';}
+ const NM={"th-qt":"Sơ đồ quy trình","th-bc":"Báo cáo quản trị","th-ks":"Kiểm soát & chốt sổ","danh-muc":"Danh mục"},nm=id=>NM[id]||VIEWS.find(v=>v.id===id).name;
+ const B=(id,no)=>'<button type="button" data-go="'+id+'"'+(curT===id?' aria-current="page"':'')+'>'+(no?'<span class="no">'+no+'</span>':'')+nm(id)+(id==="hom-nay"&&c?' ('+c+')':'')+'</button>';
+ const flow=["hop-dong","ho-so","thau-phu"].map((id,i)=>B(id,i+1)).join('<span class="arr">›</span>');
+ tt.innerHTML=''+
+  '<span class="grp"><span class="gl">Hằng ngày</span>'+B("hom-nay")+B("ghi-so")+'</span>'+
+  '<span class="grp"><span class="gl">Nghiệp vụ</span>'+B("th-qt")+'<span class="arr">·</span>'+flow+'</span>'+
+  '<span class="grp"><span class="gl">Theo dõi</span>'+B("ke-hoach")+B("th-bc")+'</span>'+
+  '<span class="grp"><span class="gl">Thiết lập</span>'+B("danh-muc")+'</span>'+
+  '<span class="grp"><span class="gl">Cuối kỳ</span>'+B("th-ks")+'</span>';}
 function pageAlert(){
  if(S.snap)return '<div class="msg"><b>Bản chỉ xem · số liệu lúc '+esc(fmtAt(S.snap.at))+'</b><span>Bản này tự cập nhật mỗi khi chủ app mở app. Bạn xem được mọi màn hình nhưng không ghi được vào Sheet. Muốn sửa hoặc ghi sổ, mở thẳng file Google Sheet (nếu đã được chia sẻ).</span><div><a class="btn sm" href="'+SHEET_URL+'" target="_blank" rel="noopener">Mở Google Sheet</a></div></div>';
  if(S.noMcp||S.snapErr){if(S.snapLoading||(!S.snapErr&&S.noMcp))return "";
@@ -1373,7 +1375,7 @@ function kxDays(d){if(!d)return null;return Math.round((d0(d)-d0(new Date()))/86
 
 function vKiemSoat(){
  const ready=S.data.dn&&S.data.dot&&S.data.so&&S.data.tq;
- let h='<section class="sec"><div><h1>Kiểm soát tài chính</h1><div class="sub">'+esc(stamp())+' · Dành cho Tài chính &amp; Hợp đồng · Số tiền gồm VAT</div></div></section>';
+ let h='<section class="sec"><div><h1>Kiểm soát &amp; chốt sổ</h1><div class="sub">'+esc(stamp())+' · Dành cho Tài chính &amp; Hợp đồng · Số tiền gồm VAT</div></div></section>';
  if(!ready)return h+loading();
  const missing=["qtda","viec","chot"].filter(k=>S.err[k]);
  if(missing.length)h+='<div class="alert"><b>Sheet chưa có các tab quản trị mới</b><span>Không đọc được tab: '+missing.map(k=>esc(RNAME[k][0])).join(", ")+'. Kiểm tra lại file Google Sheet.</span></div>';
@@ -1390,7 +1392,7 @@ function vKiemSoat(){
  {const C=kxCash(),R=C.R,noAc=DOT().filter(o=>!o.hs&&o.con>1&&!o.dkthu&&o.tt!=="Đã thu đủ").length;
   h+='<section class="sec"><div class="sec-h"><h2>Dòng tiền dự kiến 30 / 60 / 90 ngày</h2><span class="sub">Cộng dồn từ hôm nay'+(S.cfFix?' · gồm chi cố định '+short(S.cfFix)+'/tháng':'')+'</span></div><div class="card tblwrap"><table class="tbl kx-cf"><thead><tr><th>Trong</th><th class="n">Dự kiến thu</th><th class="n">Dự kiến chi</th><th class="n">Chênh lệch</th></tr></thead><tbody>'+
    C.out.map(o=>'<tr><td><b>'+o.n+' ngày</b></td><td class="n" style="color:var(--in)">'+short(o.thu)+'</td><td class="n" style="color:var(--out)">'+short(o.chi)+'</td><td class="n" style="font-weight:700;color:'+(o.net<0?'var(--bad)':'var(--ink)')+'">'+(o.net<0?'−':'')+short(Math.abs(o.net))+'</td></tr>').join("")+'</tbody></table></div>';
-  const notes=[];if(R.odSum>1)notes.push('Chưa tính '+short(R.odSum)+' CĐT đã quá hạn (không đoán được ngày trả).');if(R.assumed>1)notes.push(short(R.assumed)+' tiền thu dựa trên ngày giả định.');if(noAc)notes.push(noAc+' đợt chưa đến điều kiện chưa có “Ngày dự kiến thu” (cột AC tab Đợt CĐT) nên chưa vào dự báo.');if(!S.cfFix)notes.push('Chưa nhập chi cố định hằng tháng (lương, thuê VP, lãi vay) ở tab Kế hoạch.');
+  const notes=[];if(R.odSum>1)notes.push('Chưa tính '+short(R.odSum)+' CĐT đã quá hạn (không đoán được ngày trả).');if(R.assumed>1)notes.push(short(R.assumed)+' tiền thu dựa trên ngày giả định.');if(noAc)notes.push(noAc+' đợt chưa đến điều kiện chưa có “Ngày dự kiến thu” (cột AC tab Đợt CĐT) nên chưa vào dự báo.');if(!S.cfFix)notes.push('Chưa nhập chi cố định hằng tháng (lương, thuê VP, lãi vay) ở Kế hoạch → Tổng quát.');
   if(notes.length)h+='<p class="sub kx-note">'+notes.map(esc).join(" ")+'</p>';h+='</section>';}
  h+=kxViec();
  h+=kxDoiSoat();
@@ -1669,7 +1671,7 @@ function view(){let h="";{const R=gvLive();if(R){S.data.dot=R.dot;S.data.tp=R.tp
  if(S.loading&&!S.data.dot)return '<div class="card empty"><span class="spin"></span>&nbsp; Đang tải từ Google Sheet…</div>';
  if(S.snap)h+='<div class="msg"><b>Bản chỉ xem</b><span>Bạn xem được tiến độ nhưng chưa gửi được cập nhật. Muốn gửi, kết nối Google Sheets trên claude.ai và nhờ Kế toán chia sẻ quyền sửa file Sheet dự án.</span></div>';
  else if(S.err&&!(S.data.dot||[]).length)return '<div class="alert bad"><b>Chưa xem được tiến độ dự án</b><span>'+esc(errText(S.err))+'</span></div>';
- const P=PROJ();if(!P.length)return h+'<div class="card empty">Chưa có dữ liệu. Kế toán cần bấm “Đồng bộ sang Sheet GĐDA” trong app HBA Hợp đồng.</div>';
+ const P=PROJ();if(!P.length)return h+'<div class="card empty">Chưa có dữ liệu. Kế toán cần bấm “Đồng bộ sang Sheet GĐDA” ở Tài chính &amp; Hợp đồng → Kiểm soát &amp; chốt sổ.</div>';
  if(!P.some(p=>p.ma===S.hd))S.hd=P[0].ma;const p=P.find(x=>x.ma===S.hd);
  h+='<section class="sec"><div><h1>Dự án</h1><div class="sub">Tiền, kế hoạch công việc, nhân sự và hồ sơ của từng dự án'+(S.live?'':' · '+esc(stamp()))+'</div></div><div class="gv-proj" role="group" aria-label="Chọn dự án">'+P.map(x=>'<button type="button" data-gv="hd" data-v="'+esc(x.ma)+'" aria-pressed="'+(x.ma===S.hd)+'"'+(x.extra?' class="gv-x"':'')+'>'+esc(x.ten)+'</button>').join("")+'</div></section>';
  if(String(p.ma).startsWith("hr:"))return h+gvNoContract(p);
@@ -1865,7 +1867,7 @@ function nsDuAn(){const L=nsProjects(),withHd=L.filter(p=>p.hd),noHd=L.filter(p=
  h+=withHd.map((p,i)=>nsProjCard(p,i<2&&p.nNow>0)).join("");
  if(noHd.length)h+='<div class="sec-h" style="margin-top:6px"><h2 style="font-size:15px">Dự án chưa gắn hợp đồng · '+noHd.length+'</h2><span class="sub">Công việc chung hoặc dự án chưa có trong hệ thống hợp đồng</span></div>'+noHd.map(p=>nsProjCard(p,false)).join("");
  if(multi.length)h+='<div class="msg"><b>Đang làm nhiều dự án cùng lúc</b><span>'+multi.map(b=>esc(nsShow(b.ten))+': '+esc(b.ps.join(", "))).join(" · ")+'</span></div>';
- h+='<p class="sub kx-note">Mã dự án bên nhân sự được nối với hợp đồng ở cột J tab “Quản trị dự án” (sửa được trong Tài chính &amp; Hợp đồng → Báo cáo → Kiểm soát). Một hợp đồng có thể nhận nhiều mã, cách nhau bằng dấu phẩy.</p></section>';
+ h+='<p class="sub kx-note">Mã dự án bên nhân sự được nối với hợp đồng ở cột J tab “Quản trị dự án” (sửa được trong Tài chính &amp; Hợp đồng → Kiểm soát &amp; chốt sổ). Một hợp đồng có thể nhận nhiều mã, cách nhau bằng dấu phẩy.</p></section>';
  return h;}
 /* khối nhân sự cho một hợp đồng (dùng ở vai trò Giám đốc dự án) */
 function nsProjBlock(hd){nsEnsure();let h='<section class="sec"><div class="sec-h"><h2>Ai đang làm dự án này</h2><span class="sub">Từ phiếu công việc và tăng ca</span></div>';
@@ -2378,9 +2380,10 @@ document.addEventListener("click",ev=>{const t=ev.target.closest("[data-xl]");if
 /* Dự án & Nhân sự: một tab chính, ba tab con */
 const DN_SUB=["gd","pc","ns"];
 function dnTabs(){return '<section class="sec"><div class="seg dn-seg" role="group" aria-label="Dự án và nhân sự">'+[["gd","Dự án"],["pc","Phân công"],["ns","Nhân sự"]].map(t=>'<button type="button" data-role="'+t[0]+'" aria-pressed="'+(S.role===t[0])+'">'+t[1]+'</button>').join("")+'</div></section>';}
-function vTongHop(){const tab=S.thTab||"qt";
- const seg='<div class="seg" role="group" aria-label="Chế độ xem" style="max-width:600px"><button type="button" data-act="th-tab" data-t="qt" aria-pressed="'+(tab==="qt")+'">Quy trình hợp đồng</button><button type="button" data-act="th-tab" data-t="bc" aria-pressed="'+(tab==="bc")+'">Báo cáo quản trị</button><button type="button" data-act="th-tab" data-t="ks" aria-pressed="'+(tab==="ks")+'">Kiểm soát</button></div>';
- return '<section class="sec">'+seg+'</section>'+(tab==="qt"?vQuyTrinh():tab==="ks"?vKiemSoat():vQuanTri());}
+function vTongHop(){const tab=S.thTab||"bc";
+ const T=[["qt","Sơ đồ quy trình"],["bc","Báo cáo quản trị"],["ks","Kiểm soát & chốt sổ"]];
+ const seg='<div class="seg th-seg" role="group" aria-label="Báo cáo">'+T.map(x=>'<button type="button" data-act="th-tab" data-t="'+x[0]+'" aria-pressed="'+(tab===x[0])+'">'+x[1]+'</button>').join("")+'</div>';
+ return '<section class="sec th-segwrap">'+seg+'</section>'+(tab==="qt"?vQuyTrinh():tab==="ks"?vKiemSoat():vQuanTri());}
 /* ---------- DỰ BÁO DÒNG TIỀN 8 TUẦN ----------
  Thu: hồ sơ đã gửi chưa thu đủ → theo "Hạn CĐT phải trả"; không có hạn → ngày gửi + số ngày CĐT phải trả trong HĐ (ngày làm việc ≈ ×7/5), không có → +30 ngày.
       Hồ sơ đã lập chưa gửi → giả định gửi trong 7 ngày rồi cộng hạn như trên. Khoản đã quá hạn không đưa vào tuần nào (không đoán được ngày thu).
@@ -2607,7 +2610,7 @@ function vQuyTrinh(){
  const noL=H.filter(h=>!O.some(d=>d.hd===h.ma)).length,wipV=m.wip.reduce((a,x)=>a+x.phai,0),unV=m.unsent.reduce((a,x)=>a+x.con,0),ar=m.age.reduce((a,b)=>a+b,0),od=m.age[1]+m.age[2]+m.age[3];
  const F=flows("thang"),fin=F.reduce((a,x)=>a+x.thu,0),fout=F.filter(x=>x.hd).reduce((a,x)=>a+x.chi,0);
  const tpNoL=TPs.filter(c=>!m.P.some(d=>d.hdtp===c.ma)).length,waitV=m.P.filter(d=>d.con>1&&d.han<=1).reduce((a,d)=>a+d.con,0),waitN=m.P.filter(d=>d.con>1&&d.han<=1).length,dueN=m.P.filter(d=>d.han>1).length;
- let h='<div class="hub"><div class="card hubcard"><h3>Quy trình hợp đồng</h3><div class="sub" style="text-align:center">Số tròn trên mỗi bước = việc đang nằm ở bước đó · bấm để xử lý</div>';
+ let h='<div class="hub"><div class="card hubcard"><h3>Sơ đồ quy trình hợp đồng</h3><div class="sub" style="text-align:center">Số tròn trên mỗi bước = việc đang nằm ở bước đó · bấm để xử lý</div>';
  h+='<div class="lane out"><div class="lane-h"><span class="tag out">ĐẦU RA</span>Hợp đồng với chủ đầu tư · tiền vào</div><div class="flow">'+
   fnode("sign","Ký HĐ chủ đầu tư",H.length+" hợp đồng · "+short(H.reduce((a,x)=>a+x.gtSau,0)),{n:H.length},"hub-go",' data-to="tree-out"')+
   fnode("cal","Lập lịch đợt",noL?noL+" HĐ chưa có lịch":"Đủ lịch",noL?{n:noL,c:"warn"}:null,"hub-go",' data-to="tree-out"')+
@@ -2644,7 +2647,7 @@ function vQuyTrinh(){
     cs.map(c=>'<div class="tin" role="button" tabindex="0" data-act="open-hd" data-ma="'+esc(c.hd)+'"><span class="ti" style="background:var(--in)"></span><span class="a">'+esc(shortName(c.hd))+'</span><span class="b">'+esc(c.pv||c.ma)+'</span><span class="c">'+(c.gt?short(c.gt):'<span class="tsub">chưa có giá trị</span>')+'</span></div>').join("")+'</div></div>';}).join("")+'</div>';}
  return h+'</section>';}
 function hubGo(to){const qt=["exc","cf","age","mx","lai","ky"];
- if(qt.includes(to)){S.thTab="bc";render();const id={exc:"sec-exc",cf:"sec-cf",age:"sec-age",mx:"sec-mx",lai:"sec-lai",ky:"ky"}[to];setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({block:"start"});},40);return;}
+ if(qt.includes(to)){S.thTab="bc";ls.set("hba.th","bc");render();const id={exc:"sec-exc",cf:"sec-cf",age:"sec-age",mx:"sec-mx",lai:"sec-lai",ky:"ky"}[to];setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({block:"start"});},40);return;}
  if(to==="tree-out"||to==="tree-in"){S.treeV=to==="tree-in"?"dau-vao":"du-an";render();setTimeout(()=>{const el=document.getElementById("tree");if(el)el.scrollIntoView({block:"start"});},40);return;}
  if(to==="hs"||to==="hs-chua-gui"||to==="hs-cho"){S.hsF=to==="hs"?"all":to==="hs-chua-gui"?"chua-gui":"cho";S.hsH="";go("ho-so");return;}
  if(to==="vx-gui"){S.vxF="gui";S.vxH="";go("viec-xong");return;}
@@ -3159,7 +3162,7 @@ function render0(preserve){
  for(const id in snap){const el=document.getElementById(id);if(el)el.value=snap[id];}
  if(keep){const el=document.getElementById(keep.id);if(el){el.focus();try{if(keep.s!=null&&el.setSelectionRange)el.setSelectionRange(keep.s,keep.e)}catch(e){}}}
 }
-function go(v){S.view=v;try{history.replaceState(null,"","#"+v)}catch(e){location.hash=v}render();window.scrollTo(0,0);}
+function go(v){if(/^th-/.test(v)){S.thTab=v.slice(3);ls.set("hba.th",S.thTab);v="tong-hop";}S.view=v;try{history.replaceState(null,"","#"+v)}catch(e){location.hash=v}render();window.scrollTo(0,0);}
 
 /* ---------- thao tác ---------- */
 function readF(){const v=id=>{const e=document.getElementById(id);return e?e.value:null;};const f=S.f;
