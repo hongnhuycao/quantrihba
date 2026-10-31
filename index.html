@@ -669,6 +669,12 @@ body[data-role="gd"] main,body[data-role="ns"] main{padding-bottom:40px}
 @media (max-width:759px){body[data-role="kt"] .subbar{display:none}}
 @media (min-width:1280px){.subtabs{max-width:1680px}}
 body[data-role="pc"][data-pcv="grid"] .subtabs{max-width:none}
+.kx-split .q,.kx-leg i.q{background:var(--bad)}
+.kq2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media (max-width:600px){.kq2{grid-template-columns:1fr}}
+.kq{padding:12px 14px;display:flex;flex-direction:column;gap:2px}.kq-h{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.kq-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font-size:13.5px}.kq-r:first-of-type{border-top:0}.kq-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pt-f{white-space:normal!important;text-align:left!important}.pt-f .pill{margin:2px 4px 2px 0}
+.sumtbl td .z{font-size:12px}.sumtbl th.l{text-align:left}
 @media (min-width:760px){.th-segwrap{display:none}.subtabs{flex-wrap:wrap;row-gap:4px}.subtabs .grp{flex-wrap:wrap}.subtabs button{padding:7px 9px}}
 </style>
 
@@ -738,7 +744,7 @@ async function snapLoad(){S.snapLoading=true;S.snapErr="";render();const d=await
  S.snapLoading=false;render();}
 function snapFallback(){if(S.snapTried)return;const ks=Object.keys(RANGES);if(ks.some(k=>S.data[k]&&!S.err[k]))return;if(!ks.every(k=>S.err[k]&&DENY.includes(S.err[k].code)&&S.err[k].code!=="approval_required"))return;S.snapTried=true;snapLoad();}
 const ls={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-S.role=ls.get("hba.role")||"kt";S.hd=ls.get("hba.hd");S.tp=ls.get("hba.tp");S.per=ls.get("hba.per")||"hom-nay";S.thTab=ls.get("hba.th")||"bc";S.khTab=ls.get("hba.kh")||"tq";{const b=ls.get("hba.cfBal");S.cfBal=b===""?null:num(b);S.cfFix=num(ls.get("hba.cfFix"));}
+S.role=ls.get("hba.role")||"kt";S.hd=ls.get("hba.hd");S.tp=ls.get("hba.tp");S.per=ls.get("hba.per")||"hom-nay";S.thTab=ls.get("hba.th")||"bc";S.qtPer=ls.get("hba.qtper")||"thang";S.khTab=ls.get("hba.kh")||"tq";{const b=ls.get("hba.cfBal");S.cfBal=b===""?null:num(b);S.cfFix=num(ls.get("hba.cfFix"));}
 
 /* ---------- tiện ích ---------- */
 function newForm(){return {kind:"",loai:"",hd:"",tpn:"",ct:"",nhom:"",ngay:today(),tien:"",dt:"",nd:"",vat:"",gc:"",err:""};}
@@ -1382,11 +1388,11 @@ function vKiemSoat(){
  const M=kxMoney();
  /* 1. tiền chưa thu */
  if(M){const W=x=>M.tot>0?(x/M.tot*100).toFixed(2):0;
-  h+='<section class="sec"><div class="sec-h"><h2>Tiền chủ đầu tư chưa thu: '+short(M.tot)+'</h2><span class="sub">Chỉ phần “đã gửi, chưa nhận” là công nợ thực sự</span></div>';
+  h+='<section class="sec"><div class="sec-h"><h2>Tiền chủ đầu tư chưa thu: '+short(M.tot)+'</h2><span class="sub">Công nợ thực sự là phần “đã gửi, chờ CĐT trả”</span></div>';
   h+='<div class="kx-split" role="img" aria-label="Tỷ trọng ba loại tiền chưa thu"><i class="a" style="width:'+W(M.a)+'%"></i><i class="b" style="width:'+W(M.b)+'%"></i><i class="c" style="width:'+W(M.c)+'%"></i></div>';
   h+='<div class="kpi3 kx-3">'+
    '<div class="card kpi warn"><span class="k">1 · Đủ điều kiện, chưa đòi tiền</span><span class="v">'+short(M.a)+'</span><span class="n">'+M.m.wip.length+' đợt chưa lập hồ sơ ('+short(M.a1)+') · '+M.m.unsent.length+' hồ sơ chưa gửi ('+short(M.a2)+'). Việc nội bộ, xử lý được ngay.</span></div>'+
-   '<div class="card kpi '+(M.od>0?'bad':'neu')+'"><span class="k">2 · Đã gửi CĐT, chưa nhận</span><span class="v">'+short(M.b)+'</span><span class="n">'+M.m.sent.length+' hồ sơ'+(M.od>0?' · <b style="color:var(--bad)">quá hạn '+short(M.od)+'</b>':' · chưa có khoản quá hạn')+'. Hạn tính từ ngày hóa đơn VAT.</span></div>'+
+   '<div class="card kpi '+(M.od>0?'bad':'neu')+'"><span class="k">2 · Đã gửi, chờ CĐT trả</span><span class="v">'+short(M.b)+'</span><span class="n">'+M.m.sent.length+' hồ sơ'+(M.od>0?' · <b style="color:var(--bad)">quá hạn '+short(M.od)+'</b>':' · chưa có khoản quá hạn')+'. Hạn tính từ ngày hóa đơn VAT.</span></div>'+
    '<div class="card kpi neu"><span class="k">3 · Chưa đến điều kiện</span><span class="v">'+short(M.c)+'</span><span class="n">Giá trị hợp đồng còn lại, chưa phải công nợ.</span></div></div></section>';}
  /* 2. dòng tiền 30/60/90 */
  {const C=kxCash(),R=C.R,noAc=DOT().filter(o=>!o.hs&&o.con>1&&!o.dkthu&&o.tt!=="Đã thu đủ").length;
@@ -1572,7 +1578,7 @@ document.addEventListener("click",ev=>{const t=ev.target.closest("[data-kx]");if
  else if(a==="gd-sync")kxSyncRun();
  else if(a==="gd-ok")gdDecide(+t.dataset.r,true);
  else if(a==="gd-no")gdDecide(+t.dataset.r,false);
- else if(a==="ceo-all"){S.ceoAll=true;render();}
+ else if(a==="ceo-all"){S.ceoAll=!S.ceoAll;render();}
 });
 /* ---------- ĐIỀU HÀNH (CEO): 5 câu hỏi, chỉ đọc ---------- */
 function ceoProfit(){const T=TQ(),H=HD(),P=TP(),Q=QTDA();if(!T)return [];
@@ -1583,41 +1589,140 @@ function ceoProfit(){const T=TQ(),H=HD(),P=TP(),Q=QTDA();if(!T)return [];
   const vuot=ns!=null&&ns>0&&t.cp>ns*(1+(q.nguong||0.1)),use=ns?t.cp/ns:null;
   const risk=base<0?"Lỗ dự kiến":vuot?"Vượt ngân sách":(ns!=null&&use>1)?"Sát ngân sách":ns==null?"Chưa có ngân sách":bien!=null&&bien<0.1?"Biên lãi thấp":"";
   return {ma:t.ma,gt:t.gt,gtTruoc,tpTruoc,cp:t.cp,ns,lai,laiNs,base,bien,risk,gdda:q.gdda||"",thu:t.thu};}).filter(x=>x.gt>0).sort((a,b)=>(a.bien==null?9:a.bien)-(b.bien==null?9:b.bien));}
+/* ---------- SỐ LIỆU DÙNG CHUNG cho Điều hành và Báo cáo quản trị ----------
+ Một định nghĩa cho mỗi chỉ số:
+ · Lãi gộp (trước VAT) = HĐ CĐT − HĐ thầu phụ − chi phí dự án đã ghi Sổ (cột Lãi của tab Tổng quan). Dự án chưa có HĐ thầu phụ → "chưa đủ số liệu".
+ · Dòng tiền sắp tới = dự báo của tab Kế hoạch (cashFc).
+ · Tiền CĐT chưa thu chia 3 loại: Đủ điều kiện, chưa đòi / Đã gửi, chờ CĐT trả / Chưa đến điều kiện. */
+function projRows(){const T=TQ();if(!T)return [];const PR=ceoProfit();
+ return T.rows.filter(r=>r.gt>0).map(r=>{const h=hdInfo(r.ma),p=PR.find(x=>x.ma===r.ma)||{},dat=hdProg(r.ma).dat,thu=r.thu/r.gt;
+  const base=h.gtTruoc||r.gt/(1+(h.vat>0?h.vat:0.08)),known=String(r.lai).trim()!=="",lai=num(r.lai),noTP=!r.gtTP,laiOk=known&&!noTP,laiPc=base?lai/base:null;
+  const flags=[];
+  if(p.risk==="Lỗ dự kiến"||p.risk==="Vượt ngân sách")flags.push(["bad",p.risk]);
+  if(laiOk&&laiPc!=null&&laiPc<0)flags.push(["bad","Lỗ"]);else if(laiOk&&laiPc!=null&&laiPc<0.2)flags.push(["out","Lãi gộp thấp"]);
+  if(dat!=null&&dat-thu>0.15)flags.push(["out","Làm nhiều, thu ít"]);
+  if(noTP)flags.push(["","Chưa có HĐ thầu phụ"]);
+  const sc=flags.reduce((s,f)=>s+(f[0]==="bad"?4:f[0]==="out"?2:0),0);
+  return {ma:r.ma,name:kxName(r.ma),gt:r.gt,dat,thu,lai,laiPc,laiOk,noTP,flags,sc,r};}).sort((a,b)=>b.sc-a.sc||b.gt-a.gt);}
+function cdtShort(s){return String(s||"").replace(/^[A-Z0-9]+_/,"").replace(/^CÔNG TY (CỔ PHẦN|TNHH)\s*/i,"").slice(0,40);}
+function pctCell(v){return v==null?'<span class="z">–</span>':Math.round(v*100)+'%';}
+function laiTxt(p){if(!p.laiOk)return '<span class="z">chưa đủ số liệu</span>';return '<b style="color:'+(p.laiPc<0?'var(--bad)':p.laiPc<0.2?'var(--out)':'var(--ink)')+'">'+Math.round(p.laiPc*100)+'%</b> <span class="z">'+(p.lai<0?'−':'')+short(Math.abs(p.lai))+'</span>';}
+/* Phải trả thầu phụ theo tuổi nợ (quy định trả trong TP_HAN ngày sau khi CĐT trả) */
+function apStats(){const by={},tot={cho:0,trong:0,q1:0,q2:0,q3:0,unk:0};
+ DTP().forEach(d=>{const han=Math.max(0,d.han),rest=Math.max(0,d.con-han),a=tpAge(d),k=(d.ten||"").trim()||"(chưa có tên)";
+  const r=by[k]=by[k]||{cho:0,trong:0,q1:0,q2:0,q3:0,unk:0};const add=(f,v)=>{if(v>1){r[f]+=v;tot[f]+=v;}};
+  add("cho",rest);
+  if(han>1){if(!a||!a.late)add("trong",han);else if(a.unk)add("unk",han);else{const od=-a.left;add(od<=30?"q1":od<=60?"q2":"q3",han);}}});
+ const q=tot.q1+tot.q2+tot.q3+tot.unk;tot.qua=q;tot.all=q+tot.trong+tot.cho;return {by,tot};}
+function moneyBar(segs){const all=segs.reduce((s,x)=>s+x[1],0)||1;
+ return '<div class="kx-split" role="img" aria-label="'+esc(segs.map(x=>x[2]+' '+short(x[1])).join(', '))+'">'+segs.map(x=>x[1]>0?'<i class="'+x[0]+'" style="width:'+(x[1]/all*100).toFixed(2)+'%"></i>':'').join("")+'</div>'+
+  '<div class="kx-leg">'+segs.map(x=>'<span><i class="'+x[0]+'"></i>'+x[2]+' <b'+(x[3]?' style="color:var(--bad)"':'')+'>'+short(x[1])+'</b>'+(x[4]||'')+'</span>').join("")+'</div>';}
+function arBar(M){return moneyBar([["a",M.a,"Đủ điều kiện, chưa đòi"],["b",M.b,"Đã gửi, chờ CĐT trả",false,M.od>0?' (quá hạn <b style="color:var(--bad)">'+short(M.od)+'</b>)':''],["c",M.c,"Chưa đến điều kiện"]]);}
+function apBar(A){return moneyBar([["q",A.tot.qua,"Quá hạn trả",A.tot.qua>0],["a",A.tot.trong,"Đến hạn, còn trong "+TP_HAN+" ngày"],["c",A.tot.cho,"Chờ CĐT trả"]]);}
+/* Việc cần CEO quyết: gộp theo dự án */
+function ceoIssues(m){const G={},add=(key,base,v,days,who)=>{const g=G[key]=G[key]||Object.assign({n:0,v:0,max:0,who:new Set(),unk:0},base);g.n++;g.v+=v||0;if(days==null)g.unk++;else g.max=Math.max(g.max,days);if(who)g.who.add(who);};
+ m.sent.filter(x=>x.qh>0).forEach(x=>add("cdt|"+x.hd,{t:"cdt",ma:x.hd,lv:"bad"},x.con,x.qh));
+ DTP().filter(d=>d.han>1).forEach(d=>{const a=tpAge(d);if(!a||!a.late)return;const hd=DTPhd(d);add("tp|"+hd,{t:"tp",ma:hd,lv:"bad"},d.han,a.unk?null:-a.left,d.ten);});
+ m.wip.forEach(x=>add("wip|"+x.hd,{t:"wip",ma:x.hd,lv:"out"},x.phai,dAgo(x.ngaydk)));
+ m.unsent.forEach(x=>add("uns|"+x.hd,{t:"uns",ma:x.hd,lv:"out"},x.con,0));
+ const L=Object.values(G).map(g=>{const nm=kxName(g.ma);
+  if(g.t==="cdt")return {lv:"bad",w:4000+g.max,ma:g.ma,a:"CĐT chậm trả · "+nm,b:cdtShort(hdInfo(g.ma).cdt)+" · "+g.n+" hồ sơ · quá hạn tới "+g.max+" ngày",c:g.v};
+  if(g.t==="tp")return {lv:"bad",w:3000+g.max,ma:g.ma,a:"Chậm trả thầu phụ · "+nm,b:g.n+" đợt · "+g.who.size+" thầu phụ"+(g.max?" · trễ tới "+g.max+" ngày":"")+(g.unk?" · "+g.unk+" đợt chưa rõ ngày CĐT trả":""),c:g.v};
+  if(g.t==="wip"){const late=g.max>7;return {lv:late?"bad":"out",w:(late?2500:1500)+g.max,ma:g.ma,a:"Việc xong, chưa đòi tiền · "+nm,b:g.n+" đợt đạt điều kiện chưa lập hồ sơ"+(g.max?" · lâu nhất "+g.max+" ngày":""),c:g.v};}
+  return {lv:"out",w:1400,ma:g.ma,a:"Hồ sơ đã lập, chưa gửi CĐT · "+nm,b:g.n+" hồ sơ",c:g.v};});
+ ceoProfit().filter(p=>p.risk==="Vượt ngân sách"||p.risk==="Lỗ dự kiến").forEach(p=>L.push({lv:"bad",w:3500,ma:p.ma,a:p.risk+" · "+kxName(p.ma),b:"Đã chi "+short(p.cp)+(p.ns!=null?" / ngân sách "+short(p.ns):""),c:null}));
+ return L.sort((a,b)=>b.w-a.w||(b.c||0)-(a.c||0));}
+
+/* ---------- ĐIỀU HÀNH: 4 câu hỏi của CEO ---------- */
 function vCEO(){
  const ready=S.data.dn&&S.data.dot&&S.data.so&&S.data.tq&&S.data.hd;
  const C0=CHOT(),last=C0[C0.length-1];
  let h='<section class="sec"><div><h1>Điều hành</h1><div class="sub">'+esc(stamp())+(last?' · Thu chi đã chốt đến kỳ '+esc(last.ky):' · Chưa chốt kỳ thu chi nào')+'</div></div></section>';
  if(!ready)return h+loading();
- const M=kxMoney(),m=M.m,T=m.T,D=m.D,t0=d0(new Date());
- /* Q1 hôm nay */
+ wkEnsure();const M=kxMoney(),m=M.m,D=m.D,t0=d0(new Date()),A=apStats();
  const dueThu=D.filter(x=>x.con>1&&x.gui&&(x.qh>0||(dmy(x.han)&&dmy(x.han)<=t0))),dueSum=dueThu.reduce((s,x)=>s+x.con,0);
  const unDC=SOX().filter(x=>!isDC(x)).length;
- h+='<section class="sec"><div class="grp-h"><h2>Tiền</h2><span class="sub">Hôm nay phải thu, phải chi bao nhiêu</span></div><div class="kpi4">'+
-  '<div class="card kpi '+(dueSum>1?'bad':'ok')+'"><span class="k">Phải thu đã đến hạn</span><span class="v">'+short(dueSum)+'</span><span class="n">'+dueThu.length+' hồ sơ CĐT đến hạn hoặc quá hạn</span></div>'+
-  '<div class="card kpi '+(m.hanTP>1?'warn':'ok')+'"><span class="k">Phải chi thầu phụ đến hạn</span><span class="v">'+short(m.hanTP)+'</span><span class="n">Quy định trả trong '+TP_HAN+' ngày sau khi CĐT trả</span></div>'+
-  '<div class="card kpi neu"><span class="k">Tiền thuần đang giữ</span><span class="v">'+short(T.tong.thuan)+'</span><span class="n">Đã thu − đã chi, mọi hợp đồng</span></div>'+
-  '<div class="card kpi '+(unDC?'warn':'ok')+'"><span class="k">Độ tin cậy số liệu</span><span class="v">'+(unDC?unDC+' dòng':'Đủ')+'</span><span class="n">'+(unDC?'thu chi chưa đối chiếu sao kê':'mọi dòng thu chi đã đối chiếu')+'</span></div></div>';
- const W=x=>M.tot>0?(x/M.tot*100).toFixed(2):0;
- h+='<div class="card kx-money"><div class="kx-mh"><b>Tiền CĐT chưa thu '+short(M.tot)+'</b><span class="sub">Chỉ phần màu xanh là công nợ thực sự</span></div><div class="kx-split"><i class="a" style="width:'+W(M.a)+'%"></i><i class="b" style="width:'+W(M.b)+'%"></i><i class="c" style="width:'+W(M.c)+'%"></i></div>'+
-  '<div class="kx-leg"><span><i class="a"></i>Đủ điều kiện, chưa đòi <b>'+short(M.a)+'</b></span><span><i class="b"></i>Đã gửi, chưa nhận <b>'+short(M.b)+'</b>'+(M.od>0?' (quá hạn <b style="color:var(--bad)">'+short(M.od)+'</b>)':'')+'</span><span><i class="c"></i>Chưa đến điều kiện <b>'+short(M.c)+'</b></span></div></div></section>';
- /* Q3 dòng tiền */
- {const C=kxCash(),R=C.R;
-  h+='<section class="sec"><div class="sec-h"><h2 style="font-size:15px">Dòng tiền 30 / 60 / 90 ngày tới</h2><span class="sub">Cộng dồn từ hôm nay</span></div><div class="card tblwrap"><table class="tbl kx-cf"><thead><tr><th>Trong</th><th class="n">Dự kiến thu</th><th class="n">Dự kiến chi</th><th class="n">Chênh lệch</th></tr></thead><tbody>'+
-   C.out.map(o=>'<tr'+(o.n===30?' class="kx-hl"':'')+'><td><b>'+o.n+' ngày</b></td><td class="n" style="color:var(--in)">'+short(o.thu)+'</td><td class="n" style="color:var(--out)">'+short(o.chi)+'</td><td class="n" style="font-weight:700;color:'+(o.net<0?'var(--bad)':'var(--ink)')+'">'+(o.net<0?'−':'')+short(Math.abs(o.net))+'</td></tr>').join("")+'</tbody></table></div>'+
-   (R.odSum>1?'<p class="sub kx-note">Ngoài ra '+short(R.odSum)+' CĐT đã quá hạn chưa được tính vì chưa biết ngày trả.</p>':'')+'</section>';}
- h+=ceoProjects();
- /* Q2 rủi ro */
- const PR=ceoProfit(),ex=excList(m).filter(x=>x.lv==="bad");
- const risks=ex.map(x=>({lv:"bad",a:x.a,b:x.b,c:x.c})).concat(PR.filter(p=>p.risk==="Vượt ngân sách"||p.risk==="Lỗ dự kiến").map(p=>({lv:"bad",a:p.risk+" · "+kxName(p.ma),b:'Đã chi '+short(p.cp)+(p.ns!=null?' / ngân sách '+short(p.ns):''),c:null}))).concat(m.wip.filter(x=>(dAgo(x.ngaydk)||0)<=7).map(x=>({lv:"out",a:"Đạt điều kiện, chưa lập hồ sơ · "+kxName(x.hd)+" đợt "+x.so,b:x.dk,c:x.phai})));
- h+='<div class="grp-h"><h2>Cần xử lý</h2></div><section class="sec"><div class="sec-h"><h2 style="font-size:15px">Rủi ro thu tiền, thầu phụ và ngân sách</h2><span class="sub">'+risks.length+' điểm cần chú ý</span></div><div class="card">'+
-  (risks.length?risks.slice(0,S.ceoAll?99:8).map(x=>'<div class="task"><div class="ic '+(x.lv==="bad"?"bad":"out")+'">!</div><div class="a">'+esc(x.a)+'</div><div class="b">'+esc(x.b||"")+'</div><div class="c">'+(x.c!=null?money(x.c):'')+'</div></div>').join("")+(risks.length>8&&!S.ceoAll?'<button class="more" type="button" data-kx="ceo-all">Xem cả '+risks.length+' điểm</button>':''):'<div class="done">✓ Không có hợp đồng nào có rủi ro đáng kể.</div>')+'</div></section>';
- /* Q5 việc */
- const V=VIEC().filter(x=>x.tt!=="Xong"&&x.tt!=="Hủy"),uuR={"Cao":0,"Trung bình":1,"Thấp":2};
- V.sort((a,b)=>{const la=a.hanD&&kxDays(a.hanD)<0?0:1,lb=b.hanD&&kxDays(b.hanD)<0?0:1;return la-lb||uuR[a.uu]-uuR[b.uu]||(a.hanD?0:1)-(b.hanD?0:1)||(a.hanD&&b.hanD?a.hanD-b.hanD:0);});
- const noTask=excList(m).filter(x=>x.lv!=="info").length;
- h+='<section class="sec"><div class="sec-h"><h2 style="font-size:15px">Việc quản trị đang giao</h2><span class="sub">'+V.length+' việc đang mở</span></div><div class="card">'+
-  (V.length?V.slice(0,10).map(x=>{const d=kxDays(x.hanD),late=d!=null&&d<0;return '<div class="task"><div class="ic '+(late?"bad":x.uu==="Cao"?"out":"doc")+'">'+(late?"!":"✓")+'</div><div class="a">'+esc(x.nd)+'</div><div class="b">'+[x.hd?esc(kxName(x.hd)):"",x.nguoi?'<b>'+esc(x.nguoi)+'</b>':'<span style="color:var(--bad)">chưa có người phụ trách</span>',x.han?(late?'<span style="color:var(--bad);font-weight:700">quá hạn '+(-d)+' ngày</span>':'hạn '+esc(x.han)):'chưa có hạn',x.cham?'chậm vì: '+esc(x.cham):""].filter(Boolean).join(" · ")+'</div><div class="c"><span class="pill">'+esc(x.tt)+'</span></div></div>';}).join(""):'<div class="empty">Chưa có việc nào được giao. Tài chính &amp; Hợp đồng giao việc từ các cảnh báo ('+noTask+' cảnh báo đang mở).</div>')+'</div></section>';
+ const C=kxCash(),o30=C.out[0],F=cashFc(8),hb=S.cfBal!=null&&S.cfBal!=="",neg=F.W.filter(w=>(hb?w.bal:w.net)<0);
+ /* 1 */
+ h+='<section class="sec"><div class="grp-h"><h2>1. Tiền có đủ không?</h2><span class="sub">'+(unDC?'<span style="color:var(--out)">'+unDC+' dòng thu chi chưa đối chiếu sao kê</span>':'Thu chi đã đối chiếu sao kê')+'</span></div><div class="kpi4">'+
+  '<div class="card kpi '+(dueSum>1?'bad':'ok')+'"><span class="k">Phải thu đã đến hạn</span><span class="v">'+short(dueSum)+'</span><span class="n">'+(dueThu.length?dueThu.length+' hồ sơ CĐT đến hạn hoặc quá hạn':'Chưa có hồ sơ nào đến hạn')+'</span></div>'+
+  '<div class="card kpi '+(A.tot.qua>1?'bad':m.hanTP>1?'warn':'ok')+'"><span class="k">Phải trả thầu phụ đến hạn</span><span class="v">'+short(m.hanTP)+'</span><span class="n">'+(A.tot.qua>1?'<b style="color:var(--bad)">quá hạn '+short(A.tot.qua)+'</b> · ':'')+'trả trong '+TP_HAN+' ngày sau khi CĐT trả</span></div>'+
+  '<div class="card kpi '+(o30.net<0?'bad':'ok')+'"><span class="k">Dòng tiền 30 ngày tới</span><span class="v">'+(o30.net<0?'−':'')+short(Math.abs(o30.net))+'</span><span class="n">thu '+short(o30.thu)+' · chi '+short(o30.chi)+'</span></div>'+
+  '<div class="card kpi '+(neg.length?'warn':'ok')+'"><span class="k">'+(hb?'Tuần có số dư âm':'Tuần chi nhiều hơn thu')+'</span><span class="v">'+(neg.length?neg.length+' / 8 tuần':'Không có')+'</span><span class="n">'+(neg.length?'sớm nhất tuần '+ddm(neg[0].a)+'–'+ddm(neg[0].b):'trong 8 tuần tới')+'</span></div></div>'+
+  (C.R.odSum>1?'<p class="sub kx-note">Dự báo chưa tính '+short(C.R.odSum)+' CĐT đã quá hạn vì chưa biết ngày trả.</p>':'')+'</section>';
+ /* 2 */
+ h+='<section class="sec"><div class="grp-h"><h2>2. Ai nợ mình, mình nợ ai?</h2><span class="sub">Tại hôm nay · số tiền gồm VAT</span></div>'+
+  '<div class="card kx-money"><div class="kx-mh"><b>Phải thu chủ đầu tư '+short(M.tot)+'</b><span class="sub">Công nợ thực sự là phần “đã gửi”</span></div>'+arBar(M)+'</div>'+
+  '<div class="card kx-money"><div class="kx-mh"><b>Phải trả thầu phụ '+short(A.tot.all)+'</b><span class="sub">Theo các đợt thầu phụ đã lên lịch</span></div>'+apBar(A)+'</div></section>';
+ /* 3 */
+ const P=projRows(),hasNs=!!S.ns.data.task,NP=hasNs?nsProjects():[],extra=NP.filter(x=>!x.hd&&(x.nNow||x.ot));
+ const lead=ma=>{const p=ceoProfit().find(x=>x.ma===ma);return (p&&p.gdda)||wkLeadFor(ma)||planLeadFor(ma)||"";};
+ h+='<section class="sec"><div class="grp-h"><h2>3. Dự án nào cần chú ý?</h2><span class="sub">Dự án có cảnh báo xếp trên · bấm để mở</span></div><div class="card tblwrap"><table class="sumtbl ceo-pt"><thead><tr><th>Dự án</th><th>Giá trị HĐ</th><th>Đã làm</th><th>Đã thu</th><th>Lãi gộp</th><th class="l">Cần chú ý</th></tr></thead><tbody>'+
+  P.map(p=>{const wc=wkCount(p.ma),ld=lead(p.ma);return '<tr class="click" data-proj="'+esc(p.ma)+'"><td class="nm"><b>'+esc(p.name)+'</b><span>'+(ld?esc(ld):'chưa có người phụ trách')+(wc?' · '+wc+' người':'')+'</span></td><td data-l="Giá trị HĐ">'+short(p.gt)+'</td><td data-l="Đã làm">'+pctCell(p.dat)+'</td><td data-l="Đã thu">'+pctCell(p.thu)+'</td><td data-l="Lãi gộp">'+laiTxt(p)+'</td><td data-l="Cần chú ý" class="pt-f">'+(p.flags.length?p.flags.map(f=>'<span class="pill '+f[0]+'">'+esc(f[1])+'</span>').join(""):'<span class="z">Bình thường</span>')+'</td></tr>';}).join("")+
+  '</tbody></table></div><p class="sub kx-note">Đã làm = phần giá trị HĐ đã đạt điều kiện thanh toán. Lãi gộp = HĐ CĐT − HĐ thầu phụ − chi phí dự án đã ghi sổ (trước VAT), chưa trừ lương và chi phí chung.'+(extra.length?' Đang làm nhưng chưa có hợp đồng: '+extra.map(x=>'<a href="#" data-proj="hr:'+esc([...x.codes][0])+'">'+esc(x.name)+'</a>'+(x.nNow?' ('+x.nNow+' người)':'')).join(", ")+'.':'')+'</p></section>';
+ /* 4 */
+ const I=ceoIssues(m),show=S.ceoAll?I:I.slice(0,5);
+ h+='<section class="sec"><div class="grp-h"><h2>4. Cần anh/chị quyết</h2><span class="sub">'+(I.length?I.length+' điểm · gộp theo dự án':'Không có')+'</span></div><div class="card">'+
+  (I.length?show.map(x=>'<div class="task click" data-proj="'+esc(x.ma)+'"><div class="ic '+(x.lv==="bad"?"bad":"out")+'">!</div><div class="a">'+esc(x.a)+'</div><div class="b">'+esc(x.b||"")+'</div><div class="c">'+(x.c!=null?money(x.c):'')+'</div></div>').join("")+(I.length>5?'<button class="more" type="button" data-kx="ceo-all">'+(S.ceoAll?'Thu gọn':'Xem cả '+I.length+' điểm')+'</button>':''):'<div class="done">✓ Không có điểm nào cần quyết.</div>')+'</div>';
+ const V=VIEC().filter(x=>x.tt!=="Xong"&&x.tt!=="Hủy");
+ if(V.length){const uuR={"Cao":0,"Trung bình":1,"Thấp":2};V.sort((a,b)=>{const la=a.hanD&&kxDays(a.hanD)<0?0:1,lb=b.hanD&&kxDays(b.hanD)<0?0:1;return la-lb||uuR[a.uu]-uuR[b.uu]||(a.hanD?0:1)-(b.hanD?0:1)||(a.hanD&&b.hanD?a.hanD-b.hanD:0);});
+  h+='<div class="sec-h" style="margin-top:6px"><h2 style="font-size:15px">Việc quản trị đang giao · '+V.length+'</h2></div><div class="card">'+V.slice(0,5).map(x=>{const d=kxDays(x.hanD),late=d!=null&&d<0;return '<div class="task"><div class="ic '+(late?"bad":x.uu==="Cao"?"out":"doc")+'">'+(late?"!":"✓")+'</div><div class="a">'+esc(x.nd)+'</div><div class="b">'+[x.hd?esc(kxName(x.hd)):"",x.nguoi?'<b>'+esc(x.nguoi)+'</b>':'<span style="color:var(--bad)">chưa có người phụ trách</span>',x.han?(late?'<span style="color:var(--bad);font-weight:700">quá hạn '+(-d)+' ngày</span>':'hạn '+esc(x.han)):'chưa có hạn'].filter(Boolean).join(" · ")+'</div><div class="c"><span class="pill">'+esc(x.tt)+'</span></div></div>';}).join("")+'</div>';}
+ else h+='<p class="sub kx-note">Chưa giao việc quản trị nào. Tài chính &amp; Hợp đồng giao việc ở Kiểm soát &amp; chốt sổ.</p>';
+ return h+'</section>';}
+
+/* ---------- BÁO CÁO QUẢN TRỊ: báo cáo tháng ---------- */
+const QT_PER=[["thang","Tháng này"],["thang-truoc","Tháng trước"],["quy","Quý này"],["nam","Năm nay"]];
+function qtRange(k){const t=d0(new Date());let a,b=t;
+ if(k==="thang-truoc"){a=new Date(t.getFullYear(),t.getMonth()-1,1);b=new Date(t.getFullYear(),t.getMonth(),0);}
+ else if(k==="quy")a=new Date(t.getFullYear(),Math.floor(t.getMonth()/3)*3,1);
+ else if(k==="nam")a=new Date(t.getFullYear(),0,1);
+ else a=new Date(t.getFullYear(),t.getMonth(),1);
+ return [a,b];}
+function flowsR(a,b){return (S.data.so||[]).map(r=>({d:dmy(g(r,0)),ngay:g(r,0),loai:g(r,1),hd:g(r,2),dt:g(r,3),nd:g(r,7),thu:num(r[10]),chi:num(r[11])})).filter(x=>x.d&&x.d>=a&&x.d<=b&&(x.thu||x.chi));}
+function vQuanTri(){
+ const m=mgmt(),T=m.T,k=S.qtPer||"thang",[a,b]=qtRange(k),lab=QT_PER.find(x=>x[0]===k)[1];
+ let h='<section class="sec"><div><h1>Báo cáo quản trị</h1><div class="sub">'+esc(stamp())+' · Số tiền gồm VAT, riêng lãi gộp tính trước VAT</div></div>'+
+  '<div class="periods" role="group" aria-label="Kỳ báo cáo">'+QT_PER.map(p=>'<button type="button" class="chipbtn" data-act="qt-per" data-k="'+p[0]+'" aria-pressed="'+(k===p[0])+'">'+p[1]+'</button>').join("")+'<span class="sub" style="align-self:center">'+a.toLocaleDateString("vi-VN")+' – '+b.toLocaleDateString("vi-VN")+'</span></div></section>';
+ if(!T||!S.data.dn||!S.data.dot||!S.data.so)return h+loading();
+ /* 1. Kết quả kỳ */
+ const F=flowsR(a,b),thu=F.reduce((s,x)=>s+x.thu,0),chi=F.reduce((s,x)=>s+x.chi,0),net=thu-chi;
+ const KP=KH().filter(x=>x.tt!=="Hủy"&&x.d&&x.d>=a&&x.d<=b),pThu=KP.filter(x=>x.loai==="Thu").reduce((s,x)=>s+x.tien,0),pChi=KP.filter(x=>x.loai==="Chi").reduce((s,x)=>s+x.tien,0);
+ const grp=(L,f)=>{const o={};L.forEach(x=>{if(x[f])o[x.loai||"Khác"]=(o[x.loai||"Khác"]||0)+x[f];});return Object.entries(o).sort((p,q)=>q[1]-p[1]);};
+ const gT=grp(F,"thu"),gC=grp(F,"chi"),byHD={};F.forEach(x=>{const kk=x.hd||"";(byHD[kk]=byHD[kk]||{thu:0,chi:0});byHD[kk].thu+=x.thu;byHD[kk].chi+=x.chi;});
+ const hdRows=Object.entries(byHD).sort((p,q)=>(q[1].thu+q[1].chi)-(p[1].thu+p[1].chi));
+ h+='<section class="sec" id="sec-kq"><div class="sec-h"><h2>1. Kết quả thu chi · '+esc(lab.toLowerCase())+'</h2><span class="sub">Tiền vào ra thực tế từ Sổ thu chi</span></div><div class="hero3">'+
+  '<div class="card t-in"><span class="k">Đã thu</span><span class="v">'+short(thu)+'</span><span class="n">'+F.filter(x=>x.thu).length+' khoản'+(pThu?' · kế hoạch '+short(pThu):'')+'</span></div>'+
+  '<div class="card t-out"><span class="k">Đã chi</span><span class="v">'+short(chi)+'</span><span class="n">'+F.filter(x=>x.chi).length+' khoản'+(pChi?' · kế hoạch '+short(pChi):'')+'</span></div>'+
+  '<div class="card t-net"><span class="k">Chênh lệch thu − chi</span><span class="v" style="color:'+(net<0?'var(--bad)':'var(--ink)')+'">'+(net<0?'−':'')+short(Math.abs(net))+'</span><span class="n">'+(KP.length?'kế hoạch '+(pThu-pChi<0?'−':'')+short(Math.abs(pThu-pChi)):'chưa nhập kế hoạch cho kỳ này')+'</span></div></div>';
+ if(F.length){const li=(L,c)=>L.length?L.map(([n,v])=>'<div class="kq-r"><span>'+esc(n)+'</span><b style="color:var(--'+c+')">'+short(v)+'</b></div>').join(""):'<div class="kq-r"><span class="z">Không có</span></div>';
+  h+='<div class="kq2"><div class="card kq"><div class="kq-h">Thu theo loại</div>'+li(gT,"in")+'</div><div class="card kq"><div class="kq-h">Chi theo loại</div>'+li(gC,"out")+'</div></div>'+
+   '<div class="card tblwrap"><table class="sumtbl"><thead><tr><th>Hợp đồng có phát sinh</th><th>Thu</th><th>Chi</th><th>Chênh lệch</th></tr></thead><tbody>'+hdRows.map(([ma,v])=>'<tr'+(ma?' class="click" data-act="open-hd" data-ma="'+esc(ma)+'"':'')+'><td class="nm"><b>'+esc(ma?kxName(ma):'Không thuộc hợp đồng')+'</b>'+(ma?'':'<span>Vay, lương, chi phí chung…</span>')+'</td><td data-l="Thu">'+(v.thu?vnd(v.thu):'<span class="z">–</span>')+'</td><td data-l="Chi">'+(v.chi?vnd(v.chi):'<span class="z">–</span>')+'</td><td data-l="Chênh lệch"><b'+(v.thu-v.chi<0?' style="color:var(--bad)"':'')+'>'+vnd(v.thu-v.chi)+'</b></td></tr>').join("")+'</tbody></table></div>';}
+ else h+='<div class="card empty">Không có khoản thu chi nào trong kỳ này.</div>';
+ h+='</section>';
+ /* 2. Phải thu CĐT */
+ const M=kxMoney(),cls=["a0","a1","a2","a3"],labs=["Chưa đến hạn","Quá hạn 1–30 ngày","31–60 ngày","Trên 60 ngày"],ar=m.age.reduce((x,y)=>x+y,0);
+ const rowsA=Object.entries(m.ageBy).sort((p,q)=>(q[1][3]+q[1][2]+q[1][1])-(p[1][3]+p[1][2]+p[1][1])||q[1].reduce((x,y)=>x+y,0)-p[1].reduce((x,y)=>x+y,0));
+ h+='<section class="sec" id="sec-age"><div class="sec-h"><h2>2. Phải thu chủ đầu tư · '+short(M.tot)+'</h2><span class="sub">Tại hôm nay</span></div><div class="card kx-money">'+arBar(M)+'</div>'+
+  '<div class="card" style="padding:14px"><div class="kx-mh" style="margin-bottom:10px"><b>Tuổi nợ phần đã gửi · '+short(ar)+'</b><span class="sub">Hạn tính từ ngày hóa đơn VAT</span></div>'+(ar>0?
+  '<div class="agebar" role="img" aria-label="Tuổi nợ">'+m.age.map((v,i)=>v>0?'<i class="'+cls[i]+'" style="flex:'+v+'" title="'+labs[i]+': '+vnd(v)+'"></i>':'').join("")+'</div><div class="agekey">'+m.age.map((v,i)=>'<span><i class="'+cls[i]+'"></i>'+labs[i]+' <b>'+short(v)+'</b></span>').join("")+'</div>'+
+  '<table class="sumtbl" style="margin-top:12px"><thead><tr><th>Chủ đầu tư</th>'+labs.map(l=>'<th>'+l+'</th>').join("")+'<th>Tổng</th></tr></thead><tbody>'+rowsA.map(([c,v])=>'<tr><td class="nm"><b>'+esc(c.replace(/^CÔNG TY (CỔ PHẦN|TNHH)\s*/i,""))+'</b></td>'+v.map((x,i)=>'<td data-l="'+labs[i]+'"'+(x?'':' class="zz"')+(i&&x?' style="color:var(--bad);font-weight:700"':'')+'>'+(x?vnd(x):'<span class="z">–</span>')+'</td>').join("")+'<td data-l="Tổng"><b>'+vnd(v.reduce((x,y)=>x+y,0))+'</b></td></tr>').join("")+'</tbody></table>'
+  :'<div class="empty">Không có hồ sơ nào đã gửi mà chưa thu.</div>')+'</div></section>';
+ /* 3. Phải trả thầu phụ */
+ const A=apStats(),apL=[["cho","Chờ CĐT trả"],["trong","Trong hạn"],["q1","Quá hạn 1–30 ngày"],["q2","31–60 ngày"],["q3","Trên 60 ngày"]].concat(A.tot.unk>1?[["unk","Chưa rõ ngày CĐT trả"]]:[]);
+ const tpRows=Object.entries(A.by).map(([n,v])=>[n,v,v.q1+v.q2+v.q3+v.unk,apL.reduce((s,c)=>s+v[c[0]],0)]).filter(x=>x[3]>1).sort((p,q)=>q[2]-p[2]||q[3]-p[3]);
+ const diff=T.tong.conTP-A.tot.all;
+ h+='<section class="sec" id="sec-ap"><div class="sec-h"><h2>3. Phải trả thầu phụ · '+short(A.tot.all)+'</h2><span class="sub">Quy định trả trong '+TP_HAN+' ngày sau khi CĐT trả</span></div><div class="card kx-money">'+apBar(A)+(diff>1e6?'<div class="sub">Ngoài ra '+short(diff)+' giá trị HĐ thầu phụ chưa chia đợt.</div>':'')+'</div>'+
+  (tpRows.length?'<div class="card tblwrap"><table class="sumtbl"><thead><tr><th>Thầu phụ</th>'+apL.map(c=>'<th>'+c[1]+'</th>').join("")+'<th>Tổng</th></tr></thead><tbody>'+tpRows.map(([n,v,q,t])=>'<tr class="click" data-act="open-tp" data-ten="'+esc(n)+'"><td class="nm"><b>'+esc(n.replace(/^CÔNG TY (CỔ PHẦN|TNHH)\s*/i,""))+'</b></td>'+apL.map(c=>{const x=v[c[0]];return '<td data-l="'+c[1]+'"'+(x>1?'':' class="zz"')+(x>1&&/q|unk/.test(c[0])?' style="color:var(--bad);font-weight:700"':'')+'>'+(x>1?vnd(x):'<span class="z">–</span>')+'</td>';}).join("")+'<td data-l="Tổng"><b>'+vnd(t)+'</b></td></tr>').join("")+'</tbody></table></div>':'<div class="card empty">Không còn khoản nào phải trả thầu phụ.</div>')+'</section>';
+ /* 4. Hiệu quả dự án */
+ const P=projRows();
+ h+='<section class="sec" id="sec-pj"><div class="sec-h"><h2>4. Hiệu quả từng dự án</h2><span class="sub">Dự án có cảnh báo xếp trên · bấm để mở hợp đồng</span></div><div class="card tblwrap"><table class="sumtbl"><thead><tr><th>Dự án</th><th>Giá trị HĐ</th><th>Đã làm</th><th>Đã thu</th><th>Làm − thu</th><th>Lãi gộp</th><th class="l">Ghi chú</th></tr></thead><tbody>'+
+  P.map(p=>{const gap=p.dat!=null?p.dat-p.thu:null;return '<tr class="click" data-act="open-hd" data-ma="'+esc(p.ma)+'"><td class="nm"><b>'+esc(p.name)+'</b><span>'+esc(cdtShort(hdInfo(p.ma).cdt))+'</span></td><td data-l="Giá trị HĐ">'+short(p.gt)+'</td><td data-l="Đã làm">'+pctCell(p.dat)+'</td><td data-l="Đã thu">'+pctCell(p.thu)+'</td><td data-l="Làm − thu">'+(gap==null?'<span class="z">–</span>':'<b style="color:'+(gap>0.15?'var(--out)':'var(--ink2)')+'">'+(gap>0?'+':'')+Math.round(gap*100)+'%</b>')+'</td><td data-l="Lãi gộp">'+laiTxt(p)+'</td><td data-l="Ghi chú" class="pt-f">'+(p.flags.length?p.flags.map(f=>'<span class="pill '+f[0]+'">'+esc(f[1])+'</span>').join(""):'<span class="z">–</span>')+'</td></tr>';}).join("")+
+  '</tbody></table></div><p class="sub kx-note">Đã làm = phần giá trị HĐ đã đạt điều kiện thanh toán. “Làm − thu” dương nghĩa là làm nhiều hơn tiền đã thu. Lãi gộp (trước VAT) = HĐ CĐT − HĐ thầu phụ − chi phí dự án đã ghi Sổ thu chi; chưa trừ lương kiến trúc sư và chi phí chung. Dự án chưa có HĐ thầu phụ ghi “chưa đủ số liệu”.</p></section>';
+ /* 5. Dòng tiền sắp tới (tóm tắt, chi tiết ở Kế hoạch) */
+ const R=cashFc(8),hb=S.cfBal!=null&&S.cfBal!=="",neg=R.W.filter(w=>(hb?w.bal:w.net)<0),fT=R.W.reduce((s,w)=>s+w.thu,0),fC=R.W.reduce((s,w)=>s+w.chi,0);
+ h+='<section class="sec" id="sec-cf"><div class="sec-h"><h2>5. Dòng tiền 8 tuần tới</h2><span class="sub">Dự báo từ Kế hoạch thu chi</span></div><div class="card kx-link"><span>Dự kiến thu <b style="color:var(--in)">'+short(fT)+'</b> · chi <b style="color:var(--out)">'+short(fC)+'</b> · '+(neg.length?'<b style="color:var(--bad)">'+neg.length+' tuần '+(hb?'số dư âm':'chi nhiều hơn thu')+'</b>, sớm nhất tuần '+ddm(neg[0].a)+'–'+ddm(neg[0].b):'không có tuần nào '+(hb?'âm tiền':'chi nhiều hơn thu'))+(R.odSum>1?' · chưa tính '+short(R.odSum)+' CĐT quá hạn':'')+'</span><button class="btn sm" type="button" data-act="kh-go">Xem chi tiết ở Kế hoạch</button></div></section>';
  return h;}
+
 /* ---------- VAI TRÒ GIÁM ĐỐC DỰ ÁN (đọc Sheet GĐDA riêng) ---------- */
 const GV=(function(__R){
 const SID="1J5eVB9Nvj2hR1W_AKkNcQfWx2hUTMy0N6GGEyBWdFNg",SRV="Google Sheets",SHEET_URL="https://docs.google.com/spreadsheets/d/"+SID+"/edit";
@@ -1823,7 +1928,7 @@ function nsCV(X){const T=NS_TASK(),t0=X.t0,soon=addD(t0,14);
  if(justEnd.length)h+='<details class="card kx-sug"><summary><b>Việc vừa kết thúc trong 7 ngày · '+justEnd.length+'</b><span class="sub">Để kiểm tra đã hoàn thành chưa</span></summary>'+justEnd.sort((a,b)=>b.kt-a.kt).map(x=>'<div class="task"><div class="ic doc">'+esc(x.ma)+'</div><div class="a">'+esc(x.nd)+'</div><div class="b">'+esc(nsShow(x.nguoi))+' · '+nsDd(x.bd)+' → '+nsDd(x.kt)+(x.gd?' · '+esc(x.gd):'')+'</div></div>').join("")+'</details>';
  return h;}
 /* tóm tắt nhân sự cho CEO */
-function nsCEO(){nsEnsure();let h='<section class="sec"><div class="grp-h"><h2>Con người</h2><span class="sub"><a href="#" data-role-go="ns">Xem chi tiết</a></span></div>';
+function nsCEO(){nsEnsure();let h='<section class="sec"><div class="grp-h"><h2>5. Con người</h2><span class="sub"><a href="#" data-role-go="ns">Xem chi tiết</a></span></div>';
  if(!S.ns.data.phep||S.ns.loading||S.ns.err)return h+nsLoadingHtml()+'</section>';
  const X=nsSummary(),neg=X.phep.filter(p=>p.con<0).length,T=NS_TASK().filter(x=>x.bd<=X.t0&&x.kt>=X.t0);
  return h+'<div class="kpi4">'+
@@ -2457,7 +2562,7 @@ function cfSection(inp){const R=cashFc(),W=R.W,hasBal=S.cfBal!=null&&S.cfBal!=="
  return h;}
 /* ---------- KẾ HOẠCH THU CHI ---------- */
 function vKeHoach(){const tab=S.khTab||"tq";
- let h='<section class="sec"><div><h1>Kế hoạch thu chi</h1><div class="sub">'+esc(stamp())+' · Số liệu chạy sang Báo cáo quản trị → Dòng tiền 8 tuần</div></div>'+
+ let h='<section class="sec"><div><h1>Kế hoạch thu chi</h1><div class="sub">'+esc(stamp())+' · Số liệu dùng chung cho Điều hành và Báo cáo quản trị</div></div>'+
   '<div class="seg" role="group" aria-label="Kế hoạch" style="max-width:480px">'+[["thu","Dự kiến thu"],["chi","Dự kiến chi"],["tq","Tổng quát"]].map(x=>'<button type="button" data-act="kh-tab" data-t="'+x[0]+'" aria-pressed="'+(tab===x[0])+'">'+x[1]+'</button>').join("")+'</div></section>';
  if(!S.data.dn||!S.data.dtp||!S.data.dot||!S.data.hd)return h+loading();
  if(S.err.kh&&!S.data.kh)h+='<div class="msg warn"><b>Chưa đọc được tab “'+KH_SHEET+'”</b><span>'+esc(errText(S.err.kh))+'</span></div>';
@@ -2544,35 +2649,6 @@ function khClick(a,t){
  else if(a==="kh-save")khSave();
  else if(a==="kh-del")khSave("Hủy");
  else if(a==="kh-done")khSave("Đã xong");}
-function vQuanTri(){
- const m=mgmt(),T=m.T;
- let h='<section class="sec"><div><h1>Báo cáo quản trị</h1><div class="sub">'+esc(stamp())+' · Số tiền gồm VAT, trừ phần lãi tính trước VAT</div></div>';
- if(!T||!S.data.dn||!S.data.dot||!S.data.so)return h+'</section>'+loading();
- const wipV=m.wip.reduce((a,x)=>a+x.phai,0),unV=m.unsent.reduce((a,x)=>a+x.con,0),idle=wipV+unV,od=m.age[1]+m.age[2]+m.age[3],ar=m.age.reduce((a,b)=>a+b,0);
- const F=flows("thang"),thu=F.reduce((a,x)=>a+x.thu,0),chi=F.reduce((a,x)=>a+x.chi,0);
- h+='<div class="kpi5">'+
-  '<div class="card kpi '+(thu-chi<0?'bad':'ok')+'"><span class="k">Dòng tiền tháng này</span><span class="v">'+(thu-chi<0?'−':'')+short(Math.abs(thu-chi))+'</span><span class="n">Thu <b>'+short(thu)+'</b> · chi <b>'+short(chi)+'</b></span></div>'+
-  '<div class="card kpi '+(idle>0?'warn':'ok')+'"><span class="k">Việc xong, chưa đòi tiền</span><span class="v">'+short(idle)+'</span><span class="n">'+m.wip.length+' đợt chưa lập hồ sơ · '+m.unsent.length+' hồ sơ chưa gửi</span></div>'+
-  '<div class="card kpi '+(od>0?'bad':'neu')+'"><span class="k">CĐT đang nợ (đã gửi)</span><span class="v">'+short(ar)+'</span><span class="n">'+(od>0?'<b style="color:var(--bad)">Quá hạn '+short(od)+'</b>':'Chưa có khoản quá hạn')+'</span></div>'+
-  '<div class="card kpi '+(m.hanTP>1?'warn':'neu')+'"><span class="k">Phải trả thầu phụ đến hạn</span><span class="v">'+short(m.hanTP)+'</span><span class="n">Còn phải chi theo HĐ '+short(T.tong.conTP)+'</span></div>'+
-  '<div class="card kpi neu"><span class="k">Khối lượng còn lại (backlog)</span><span class="v">'+short(m.backlog)+'</span><span class="n">Giá trị HĐ chưa đạt điều kiện TT</span></div></div></section>';
- // 2. exceptions
- const E=excList(m),show=S.excAll?E:E.slice(0,8);
- h+='<section class="sec" id="sec-exc"><div class="sec-h"><h2>1. Việc cần xử lý ngay</h2><span class="sub">'+E.length+' việc · việc gấp ở trên</span></div><div class="card">'+(E.length?show.map(x=>'<div class="exc '+x.lv+'" role="button" tabindex="0" data-act="open-hd" data-ma="'+esc(x.ma)+'"><div class="ic">'+x.ic+'</div><div class="a">'+esc(x.a)+'</div><div class="b">'+esc(x.b||"")+'</div><div class="c">'+(x.c!=null?vnd(x.c):'')+'</div></div>').join("")+(E.length>8?'<div style="padding:10px 14px;border-top:1px solid var(--line)"><button class="btn sm" type="button" data-act="exc-all">'+(S.excAll?'Thu gọn':'Xem thêm '+(E.length-8)+' việc')+'</button></div>':''):'<div class="empty">Không có gì bất thường. 👍</div>')+'</div></section>';
- // 2. cash forecast
- h+=cfSection(false);
- // 3. aging
- const cls=["a0","a1","a2","a3"],labs=["Chưa đến hạn","Quá hạn 1–30 ngày","31–60 ngày","Trên 60 ngày"];
- const rowsA=Object.entries(m.ageBy).sort((a,b)=>(b[1][3]+b[1][2]+b[1][1])-(a[1][3]+a[1][2]+a[1][1])||b[1].reduce((x,y)=>x+y,0)-a[1].reduce((x,y)=>x+y,0));
- h+='<section class="sec" id="sec-age"><div class="sec-h"><h2>3. Ai đang nợ, nợ bao lâu</h2><span class="sub">Hồ sơ đã gửi CĐT, chưa thu đủ</span></div><div class="card" style="padding:14px">'+(ar>0?
-  '<div class="agebar" role="img" aria-label="Tuổi nợ">'+m.age.map((v,i)=>v>0?'<i class="'+cls[i]+'" style="flex:'+v+'" title="'+labs[i]+': '+vnd(v)+'"></i>':'').join("")+'</div><div class="agekey">'+m.age.map((v,i)=>'<span><i class="'+cls[i]+'"></i>'+labs[i]+' <b>'+short(v)+'</b></span>').join("")+'</div>'+
-  '<table class="sumtbl" style="margin-top:12px"><thead><tr><th>Chủ đầu tư</th>'+labs.map(l=>'<th>'+l+'</th>').join("")+'<th>Tổng</th></tr></thead><tbody>'+rowsA.map(([c,a])=>'<tr><td class="nm"><b>'+esc(c.replace(/^CÔNG TY (CỔ PHẦN|TNHH)\s*/i,""))+'</b></td>'+a.map((v,i)=>'<td data-l="'+labs[i]+'"'+(v?'':' class="zz"')+(i&&v?' style="color:var(--bad);font-weight:700"':'')+'>'+(v?vnd(v):'<span class="z">–</span>')+'</td>').join("")+'<td data-l="Tổng"><b>'+vnd(a.reduce((x,y)=>x+y,0))+'</b></td></tr>').join("")+'</tbody></table>'
-  :'<div class="empty">Không có khoản nào đã gửi mà chưa thu.</div>')+(unV?'<div class="sub" style="margin-top:10px">Chưa tính '+short(unV)+' của hồ sơ chưa gửi CĐT (xem mục 1).</div>':'')+'</div></section>';
- // 4. matrix
- h+='<section class="sec" id="sec-mx"><div class="sec-h"><h2>4. Dự án nào đang lệch</h2><span class="sub">Việc làm được so với tiền thu được</span></div><div class="card" style="padding:8px 6px 0">'+matrix(T.rows)+'</div></section>';
- // 5. margin
- h+='<section class="sec" id="sec-lai"><div class="sec-h"><h2>5. Lãi gộp từng dự án</h2><span class="sub">Thấp nhất ở trên</span></div><div class="card">'+margins(T.rows)+'<div class="cfnote" style="border-top:1px solid var(--line)"><b>Đây là lãi gộp, chưa phải lãi thật.</b> Lãi gộp trước VAT = HĐ CĐT − HĐ thầu phụ − chi phí dự án đã ghi Sổ thu chi. Chưa trừ lương kiến trúc sư, chi phí văn phòng và quản lý chung'+(T.tong&&!T.tong.cp?'; hiện chưa có khoản chi phí dự án nào được ghi sổ':'')+'.</div></div></section>';
- return h+vKy();}
 function mxTip(ev){const tip=document.getElementById("mxtip"),wrap=document.getElementById("mx");if(!tip||!wrap)return;const gEl=ev.target.closest&&ev.target.closest(".mx .b");if(!gEl){tip.hidden=true;return;}
  const p=(S.mxRows||[])[+gEl.dataset.mi];if(!p)return;const r=p.r,box=wrap.getBoundingClientRect();
  tip.innerHTML='<b>'+esc(shortName(r.ma))+'</b><div><span>Giá trị HĐ</span>'+vnd(r.gt)+'</div><div><span>Việc đã đạt ĐK</span>'+Math.round(p.x*100)+'%</div><div><span>Đã thu</span>'+vnd(r.thu)+' ('+Math.round(p.y*100)+'%)</div><div><span>Chờ CĐT trả</span>'+vnd(r.cho)+'</div><div><span>Còn phải thu</span>'+vnd(r.con)+'</div>';
@@ -2628,7 +2704,7 @@ function vQuyTrinh(){
  // reports
  const E=excList(m);
  h+='<div class="card reps"><h3>Báo cáo</h3>'+
-  [["exc","Việc cần xử lý ngay",E.length+" việc"],["cf","Dòng tiền 8 tuần tới",(()=>{const W=cashFc().W,hb=S.cfBal!=null&&S.cfBal!=="",n=W.filter(w=>(hb?w.bal:w.net)<0).length;return n?n+" tuần âm":"";})()],["viec-xong","Việc đã làm, chưa gửi / chưa thu / chưa xuất HĐ",DOT().filter(x=>x.thieu).length+" đợt"],["age","Công nợ phải thu theo chủ đầu tư",short(ar)],["thau-phu","Công nợ phải trả theo thầu phụ",short(T?T.tong.conTP:0)],["mx","Dự án thu chậm hơn việc",""],["lai","Lãi gộp từng dự án",""],["ky","Thu chi theo kỳ",""],["tree-out","Cây hợp đồng đầu ra → đầu vào",H.length+" dự án"]].map(r=>'<button type="button" data-act="hub-go" data-to="'+r[0]+'"><span class="dot"></span>'+r[1]+'<small>'+r[2]+'</small></button>').join("")+
+  [["exc","Việc cần xử lý (Hôm nay)",E.length+" việc"],["cf","Dòng tiền 8 tuần tới (Kế hoạch)",(()=>{const W=cashFc().W,hb=S.cfBal!=null&&S.cfBal!=="",n=W.filter(w=>(hb?w.bal:w.net)<0).length;return n?n+" tuần âm":"";})()],["viec-xong","Việc đã làm, chưa gửi / chưa thu / chưa xuất HĐ",DOT().filter(x=>x.thieu).length+" đợt"],["age","Công nợ phải thu theo chủ đầu tư",short(ar)],["ap","Công nợ phải trả theo thầu phụ",short(apStats().tot.all)],["pj","Hiệu quả từng dự án (làm, thu, lãi gộp)",""],["kq","Kết quả thu chi trong kỳ",""],["tree-out","Cây hợp đồng đầu ra → đầu vào",H.length+" dự án"]].map(r=>'<button type="button" data-act="hub-go" data-to="'+r[0]+'"><span class="dot"></span>'+r[1]+'<small>'+r[2]+'</small></button>').join("")+
   '<a href="'+SHEET_URL+'#gid='+PRINT_GID+'" target="_blank" rel="noopener"><span class="dot"></span>Trang in giấy đề nghị thanh toán<small>Sheet ↗</small></a><a href="'+SHEET_URL+'" target="_blank" rel="noopener"><span class="dot"></span>Mở file Google Sheet<small>↗</small></a></div></div>';
  // quick links
  h+='<div class="card qlinks">'+[["plus","HĐ chủ đầu tư","nf-new",' data-t="cdt"'],["plus","HĐ thầu phụ","nf-new",' data-t="tp"'],["book","Ghi sổ thu chi","hub-go",' data-to="ghi-so"'],["users","Danh mục đối tượng","hub-go",' data-to="danh-muc"'],["sheet","Hồ sơ thanh toán","hub-go",' data-to="hs"']].map(q=>'<button type="button" data-act="'+q[2]+'"'+q[3]+'>'+IC[q[0]]+q[1]+'</button>').join("")+'</div>';
@@ -2646,8 +2722,10 @@ function vQuyTrinh(){
    return '<div class="trow"><div class="tout" role="button" tabindex="0" data-act="open-tp" data-ten="'+esc(n)+'"><span class="tag" style="align-self:flex-start;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--out-soft);color:var(--out)">ĐẦU VÀO</span><span class="tn">'+esc(n)+'</span><span class="tsub">'+cs.length+' hợp đồng · '+new Set(cs.map(c=>c.hd)).size+' dự án'+(gt?' · đã chi '+short(chi)+' / '+short(gt):'')+'</span></div><div class="tlink"></div><div class="tins">'+
     cs.map(c=>'<div class="tin" role="button" tabindex="0" data-act="open-hd" data-ma="'+esc(c.hd)+'"><span class="ti" style="background:var(--in)"></span><span class="a">'+esc(shortName(c.hd))+'</span><span class="b">'+esc(c.pv||c.ma)+'</span><span class="c">'+(c.gt?short(c.gt):'<span class="tsub">chưa có giá trị</span>')+'</span></div>').join("")+'</div></div>';}).join("")+'</div>';}
  return h+'</section>';}
-function hubGo(to){const qt=["exc","cf","age","mx","lai","ky"];
- if(qt.includes(to)){S.thTab="bc";ls.set("hba.th","bc");render();const id={exc:"sec-exc",cf:"sec-cf",age:"sec-age",mx:"sec-mx",lai:"sec-lai",ky:"ky"}[to];setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({block:"start"});},40);return;}
+function hubGo(to){const qt=["age","ap","pj","kq","mx","lai","ky"];
+ if(to==="exc"){go("hom-nay");return;}
+ if(to==="cf"){S.khTab="tq";ls.set("hba.kh","tq");go("ke-hoach");return;}
+ if(qt.includes(to)){S.thTab="bc";ls.set("hba.th","bc");render();const id={age:"sec-age",ap:"sec-ap",pj:"sec-pj",mx:"sec-pj",lai:"sec-pj",kq:"sec-kq",ky:"sec-kq"}[to];setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({block:"start"});},40);return;}
  if(to==="tree-out"||to==="tree-in"){S.treeV=to==="tree-in"?"dau-vao":"du-an";render();setTimeout(()=>{const el=document.getElementById("tree");if(el)el.scrollIntoView({block:"start"});},40);return;}
  if(to==="hs"||to==="hs-chua-gui"||to==="hs-cho"){S.hsF=to==="hs"?"all":to==="hs-chua-gui"?"chua-gui":"cho";S.hsH="";go("ho-so");return;}
  if(to==="vx-gui"){S.vxF="gui";S.vxH="";go("viec-xong");return;}
@@ -3307,6 +3385,7 @@ document.addEventListener("click",ev=>{
  else if(a==="pv-close")closePrint();
  else if(a==="pv-print"){try{window.print();}catch(e){toast("Trình duyệt chặn lệnh in. Dùng nút “In bằng Google Sheet”.");}}
  else if(a==="hs-sheetprint"){closePrint();hsPrint(t.dataset.ma);}
+ else if(a==="qt-per"){S.qtPer=t.dataset.k;ls.set("hba.qtper",S.qtPer);render();}
  else if(a==="th-tab"){S.thTab=t.dataset.t;ls.set("hba.th",S.thTab);render();}
  else if(a==="hub-go")hubGo(t.dataset.to);
  else if(a==="tree-v"){S.treeV=t.dataset.v;render();}
