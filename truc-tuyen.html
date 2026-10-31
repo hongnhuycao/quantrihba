@@ -665,7 +665,7 @@ body[data-role="pc"][data-pcv="grid"] .subtabs{max-width:none}
 .kq{padding:12px 14px;display:flex;flex-direction:column;gap:2px}.kq-h{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
 .kq-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font-size:13.5px}.kq-r:first-of-type{border-top:0}.kq-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .pt-f{white-space:normal!important;text-align:left!important}.pt-f .pill{margin:2px 4px 2px 0}
-.sumtbl td .z{font-size:12px}.sumtbl th.l{text-align:left}section[id^="sec-"],#ky,#tree{scroll-margin-top:200px}.pjx{border:1px solid var(--line);background:var(--card);border-radius:6px;width:22px;height:22px;margin-right:6px;font-size:12px;line-height:1;cursor:pointer;color:var(--ink2);vertical-align:1px}.pjx:hover{border-color:var(--brand);color:var(--brand)}.pjt tr.pjh td{background:var(--bg);border-top:2px solid var(--line)}.pjt tr.pjs td{font-size:12.5px}.pjt tr.pjs td.nm{padding-left:24px;max-width:260px}.pjt tr.pjs td.nm span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pjt tr.pjs td.nm b{font-size:13px;font-weight:600}@media (max-width:700px){.pjt tr.pjs{padding-left:28px}.pjt tr.pjs td.nm{max-width:none}}
+.sumtbl td .z{font-size:12px}.sumtbl th.l{text-align:left}.io-t td:nth-child(2),.io-t td:nth-child(3){font-variant-numeric:tabular-nums;font-size:14px}@media (max-width:700px){.io-t tr{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 14px;align-items:center;padding:10px 14px}.io-t td{display:block!important;padding:0!important;border:0!important;text-align:right}.io-t td::before{content:none!important}.io-t td.nm{text-align:left}.io-t td:nth-child(4){grid-column:1/-1;text-align:left;font-size:12px;color:var(--ink3)}.io-t td:nth-child(4):not(:empty)::before{content:"Có mặt "!important}.io-t td:nth-child(5){grid-column:1/-1;text-align:left}.io-t td:nth-child(5):has(> .z:only-child){display:none!important}.io-t td:nth-child(4):has(> .z:only-child){display:none!important}}section[id^="sec-"],#ky,#tree{scroll-margin-top:200px}.pjx{border:1px solid var(--line);background:var(--card);border-radius:6px;width:22px;height:22px;margin-right:6px;font-size:12px;line-height:1;cursor:pointer;color:var(--ink2);vertical-align:1px}.pjx:hover{border-color:var(--brand);color:var(--brand)}.pjt tr.pjh td{background:var(--bg);border-top:2px solid var(--line)}.pjt tr.pjs td{font-size:12.5px}.pjt tr.pjs td.nm{padding-left:24px;max-width:260px}.pjt tr.pjs td.nm span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pjt tr.pjs td.nm b{font-size:13px;font-weight:600}@media (max-width:700px){.pjt tr.pjs{padding-left:28px}.pjt tr.pjs td.nm{max-width:none}}
 @media (min-width:760px){.th-segwrap{display:none}.subtabs{flex-wrap:wrap;row-gap:4px}.subtabs .grp{flex-wrap:wrap}.subtabs button{padding:7px 9px}}
 </style>
 
@@ -1899,6 +1899,30 @@ function vNhanSu(){nsEnsure();
  if(S.ns.tab==="lt")return h+wkGrid();
  if(S.ns.tab==="dm"){wkEnsure();return h+vDanhMucNS();}
  return h+nsHomNay(X);}
+/* Bảng giờ vào/ra từ tab ChamCong: mỗi lần quẹt là một dòng; giờ vào = lần quẹt sớm nhất trong ngày, giờ ra = lần quẹt muộn nhất cách giờ vào từ 30 phút trở lên */
+function nsInOut(day){const CC=NS_CC().filter(x=>+x.d===+day),NV=NS_NV(),by={};
+ CC.forEach(x=>{const m=nsHM(x.gio);if(m==null)return;const b=by[x.key]=by[x.key]||{ten:x.ten,ps:[]};b.ps.push(m);});
+ const off={};NS_NGHI().filter(x=>x.tt!=="Không đồng ý"&&x.tt!=="Không hợp lệ"&&x.tu<=day&&(x.den||x.tu)>=day).forEach(x=>{off[x.key]=x;});
+ const keys=new Set(NV.map(v=>v.key).concat(Object.keys(by)));const late=nsHM(HR_LATE),now=new Date(),isToday=+day===+d0(now);
+ const rows=[...keys].map(k=>{const v=NV.find(x=>x.key===k),b=by[k],o=off[k],ten=nsShow(v?v.ten:b.ten);
+  if(!b)return {k,ten,vao:null,ra:null,n:0,o,inList:!!v};
+  const ps=b.ps.sort((a,c)=>a-c),vao=ps[0],last=ps[ps.length-1],ra=last-vao>=30?last:null;
+  return {k,ten,vao,ra,n:ps.length,o,inList:!!v,tre:vao>late,dur:ra!=null?ra-vao:(isToday?(now.getHours()*60+now.getMinutes())-vao:null),dang:ra==null&&isToday};});
+ rows.sort((a,c)=>(a.vao==null)-(c.vao==null)||(a.vao||0)-(c.vao||0)||a.ten.localeCompare(c.ten,"vi"));
+ return rows;}
+function nsHM2(m){return m==null?'':String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+function nsDur(m){if(m==null||m<0)return '';return Math.floor(m/60)+" giờ "+String(m%60).padStart(2,"0");}
+function nsInOutSec(){const t0=d0(new Date()),day=S.ns.ccDay?d0(new Date(S.ns.ccDay)):t0,isToday=+day===+t0,R=nsInOut(day);
+ const co=R.filter(x=>x.vao!=null).length,tre=R.filter(x=>x.tre).length,ra=R.filter(x=>x.ra!=null).length,nghi=R.filter(x=>x.vao==null&&x.o).length,chua=R.filter(x=>x.vao==null&&!x.o&&x.inList).length;
+ const thu=["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"][day.getDay()];
+ let h='<section class="sec" id="ns-io"><div class="sec-h"><h2>Giờ vào / ra '+(isToday?'hôm nay':thu.toLowerCase()+' '+nsDd(day))+'</h2><div class="ln-nav"><button class="btn sm" type="button" data-ns="io-d" data-v="-1" aria-label="Ngày trước">‹</button><span class="sub">'+thu+', '+day.toLocaleDateString("vi-VN")+'</span><button class="btn sm" type="button" data-ns="io-d" data-v="1"'+(isToday?' disabled':'')+' aria-label="Ngày sau">›</button>'+(isToday?'':'<button class="btn sm" type="button" data-ns="io-d" data-v="0">Hôm nay</button>')+'</div></div>'+
+  '<div class="sub">Từ tab ChamCong · '+co+' người có mặt'+(isToday?' · '+(co-ra)+' người chưa ra':' · '+ra+' người có giờ ra')+(tre?' · <b style="color:var(--out)">'+tre+' người vào sau '+HR_LATE+'</b>':'')+(nghi?' · '+nghi+' người nghỉ có phiếu':'')+(chua?' · <b style="color:var(--bad)">'+chua+' người chưa chấm công</b>':'')+'</div>';
+ if(!R.length)return h+'<div class="card empty">Chưa có dữ liệu chấm công.</div></section>';
+ h+='<div class="card tblwrap"><table class="sumtbl io-t"><thead><tr><th>Nhân viên</th><th>Giờ vào</th><th>Giờ ra</th><th>Thời gian có mặt</th><th class="l">Ghi chú</th></tr></thead><tbody>'+
+  R.map(x=>{const note=[];if(x.tre)note.push('<span class="pill out">Vào trễ '+(x.vao-nsHM(HR_LATE))+' phút</span>');if(x.o)note.push('<span class="pill wait">'+esc(x.o.loai)+(x.o.tuG||x.o.denG?' '+esc((x.o.tuG||"").slice(0,5))+'–'+esc((x.o.denG||"").slice(0,5)):'')+'</span>');if(x.vao==null&&!x.o&&x.inList)note.push('<span class="pill bad">Chưa chấm công</span>');if(!x.inList)note.push('<span class="pill">Không có trong bảng phép</span>');if(x.vao!=null&&x.ra==null&&!isToday)note.push('<span class="pill bad">Thiếu giờ ra</span>');
+   return '<tr><td class="nm"><b>'+esc(x.ten)+'</b>'+(x.n>2?'<span>'+x.n+' lần quẹt</span>':'')+'</td><td data-l="Giờ vào"'+(x.tre?' style="color:var(--out);font-weight:700"':'')+'>'+(x.vao!=null?nsHM2(x.vao):'<span class="z">–</span>')+'</td><td data-l="Giờ ra">'+(x.ra!=null?nsHM2(x.ra):x.vao!=null&&isToday?'<span class="z">đang làm</span>':'<span class="z">–</span>')+'</td><td data-l="Có mặt">'+(x.dur!=null&&x.vao!=null?nsDur(x.dur)+(x.dang?' <span class="z">tới giờ</span>':''):'<span class="z">–</span>')+'</td><td data-l="Ghi chú" class="pt-f">'+(note.join("")||'<span class="z">–</span>')+'</td></tr>';}).join("")+
+  '</tbody></table></div><p class="sub kx-note">Giờ vào = lần quẹt đầu tiên trong ngày, giờ ra = lần quẹt cuối cùng (cách giờ vào từ 30 phút). Vào trễ tính sau '+HR_LATE+'. Thời gian có mặt chưa trừ nghỉ trưa.</p></section>';
+ return h;}
 function nsHomNay(X){const N=X.NV.length,cc=Object.keys(X.first).length;
  let h='<section class="sec"><div class="kpi4">'+
   '<div class="card kpi neu"><span class="k">Đã chấm công hôm nay</span><span class="v">'+cc+'/'+N+'</span><span class="n">nhân viên trong bảng phép</span></div>'+
@@ -1906,7 +1930,7 @@ function nsHomNay(X){const N=X.NV.length,cc=Object.keys(X.first).length;
   (()=>{const t0=X.t0,a=addD(t0,-((t0.getDay()+6)%7)),b=addD(a,6),L=NS_NGHI().filter(x=>x.tt!=="Không đồng ý"&&x.tt!=="Không hợp lệ"&&x.tu<=b&&(x.den||x.tu)>=a),P=new Set(L.map(x=>x.key));return '<div class="card kpi '+(P.size?'warn':'ok')+'"><span class="k">Nghỉ trong tuần này</span><span class="v">'+P.size+' người</span><span class="n">'+L.length+' phiếu nghỉ</span></div>';})()+
   '<div class="card kpi '+(X.pend.length?'warn':'ok')+'"><span class="k">Phiếu nghỉ chờ cấp trưởng</span><span class="v">'+X.pend.length+'</span><span class="n">trong 30 ngày qua</span></div></div></section>';
  h+='<section class="sec"><div class="sec-h"><h2>Nghỉ hôm nay</h2></div><div class="card">'+(X.off.length?X.off.map(x=>'<div class="task"><div class="ic doc">'+esc(nsShow(x.ten).split(" ").pop().slice(0,2).toUpperCase())+'</div><div class="a">'+esc(nsShow(x.ten))+'</div><div class="b">'+esc(x.loai)+' · '+nsDd(x.tu)+' '+esc(x.tuG.slice(0,5))+' → '+nsDd(x.den)+' '+esc(x.denG.slice(0,5))+(x.gio?' · '+(x.gio/8).toLocaleString("vi-VN",{maximumFractionDigits:2})+' ngày':'')+'</div><div class="c">'+nsPill(x.tt)+'</div></div>').join(""):'<div class="done">✓ Không ai nghỉ hôm nay.</div>')+'</div></section>';
- h+='<section class="sec"><div class="sec-h"><h2>Chưa chấm công hôm nay · '+X.noCC.length+'</h2><span class="sub">Không tính người có phiếu nghỉ</span></div><div class="card">'+(X.noCC.length?'<div class="ns-chips">'+X.noCC.map(v=>'<span class="ns-chip">'+esc(nsShow(v.ten))+'</span>').join("")+'</div>':'<div class="done">✓ Mọi người đã chấm công.</div>')+'</div></section>';
+ h+=nsInOutSec();
  h+=lnCal();
  if(X.pend.length)h+='<section class="sec"><div class="sec-h"><h2>Phiếu nghỉ chờ cấp trưởng quyết định</h2></div><div class="card">'+X.pend.map(x=>'<div class="task"><div class="ic wait">?</div><div class="a">'+esc(nsShow(x.ten))+'</div><div class="b">'+esc(x.loai)+' · '+nsDd(x.tu)+(x.den&&+x.den!==+x.tu?' → '+nsDd(x.den):'')+(x.truong?' · cấp trưởng '+esc(x.truong):'')+'</div><div class="c">'+nsPill(x.tt)+'</div></div>').join("")+'</div></section>';
  return h;}
@@ -1955,6 +1979,7 @@ document.addEventListener("click",ev=>{const r=ev.target.closest("[data-role-go]
  const t=ev.target.closest("[data-ns]");if(!t)return;const a=t.dataset.ns;
  if(a==="tab"){S.ns.tab=t.dataset.t;render();}
  else if(a==="reload"){S.ns.tried=false;S.ns.err=null;nsLoad();}
+ else if(a==="io-d"){const v=+t.dataset.v,t0=d0(new Date());if(!v){S.ns.ccDay=null;}else{let d=S.ns.ccDay?d0(new Date(S.ns.ccDay)):t0;d=addD(d,v);if(v<0)while(d.getDay()===0)d=addD(d,-1);if(v>0)while(d.getDay()===0&&d<t0)d=addD(d,1);S.ns.ccDay=+d>=+t0?null:+d;}render();}
  else if(a==="per"){const k=t.dataset.k;S.ns.per=S.ns.per===k?"":k;render();}});
 document.addEventListener("change",ev=>{const t=ev.target;if(t&&t.dataset&&t.dataset.nsSel==="month"){S.ns.month=t.value;render();}});
 /* ---- công việc theo dự án: dự án nào, ai đang làm ----
