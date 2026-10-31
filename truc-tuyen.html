@@ -1546,7 +1546,7 @@ async function kxQSave(r){const q=QTDA().find(x=>x.r===r);if(!q)return;
  S.busy=true;render();
  try{await put("'"+QT_SHEET+"'!C"+r+":G"+r,[txt(g1),txt(e1),ns,txt(d1),nsChanged?(ns!==""?dateF(today()):""):(isoVN(q.ngay)?dateF(isoVN(q.ngay)):"")]);if(hr1!==String(q.hr||"").toUpperCase())await put("'"+QT_SHEET+"'!J"+r,[txt(hr1)]);S.kx.qedit="";toast("Đã lưu");await reload();}
  catch(e){toast(errText(e,true));}S.busy=false;render();}
-document.addEventListener("click",ev=>{const b=ev.target.closest("[data-role]");if(!b)return;S.role=b.dataset.role;ls.set("hba.role",S.role);if(S.role==="gd"&&!GV.loaded())GV.load();render();window.scrollTo(0,0);});
+document.addEventListener("click",ev=>{const b=ev.target.closest("button[data-role],a[data-role]");if(!b)return;S.role=b.dataset.role;ls.set("hba.role",S.role);if(S.role==="gd"&&!GV.loaded())GV.load();render();window.scrollTo(0,0);});
 document.addEventListener("click",ev=>{const t=ev.target.closest("[data-kx]");if(!t)return;const a=t.dataset.kx;
  if(/^(viec-new|viec-from|viec-edit|q-edit|viec-cancel)$/.test(a))S.kx.noKeep=true;
  if(a==="dc-pick"){S.kx.dcSel[t.dataset.r]=t.checked;render();return;}
