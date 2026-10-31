@@ -2,8 +2,8 @@
 
 Trang web quản trị HBA chạy trên GitHub Pages: https://hongnhuycao.github.io/quantrihba/
 
-- `index.html`: bản trực tuyến. Đăng nhập bằng tài khoản Google, đọc và ghi trực tiếp các file Google Sheet của HBA theo quyền của tài khoản đó. Trang không chứa sẵn số liệu nào.
-- `offline.html`: bản chụp chỉ xem, số liệu lúc 31/10/2026 14:20.
+- `truc-tuyen.html`: bản trực tuyến (chưa dùng, cần Google Client ID). Đăng nhập bằng tài khoản Google, đọc và ghi trực tiếp các file Google Sheet của HBA theo quyền của tài khoản đó. Trang không chứa sẵn số liệu nào.
+- `index.html`: bản chụp chỉ xem (offline), số liệu lúc 31/10/2026 14:20. Đây là trang chính.
 - `config.js`: chỗ điền Google Client ID.
 - `gshim.js`: phần nối với Google Sheets API.
 
