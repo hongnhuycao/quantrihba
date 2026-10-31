@@ -674,7 +674,7 @@ body[data-role="pc"][data-pcv="grid"] .subtabs{max-width:none}
 .kq{padding:12px 14px;display:flex;flex-direction:column;gap:2px}.kq-h{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
 .kq-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font-size:13.5px}.kq-r:first-of-type{border-top:0}.kq-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .pt-f{white-space:normal!important;text-align:left!important}.pt-f .pill{margin:2px 4px 2px 0}
-.sumtbl td .z{font-size:12px}.sumtbl th.l{text-align:left}
+.sumtbl td .z{font-size:12px}.sumtbl th.l{text-align:left}.pjt tr.pjh td{background:var(--bg);border-top:2px solid var(--line)}.pjt tr.pjs td{font-size:12.5px}.pjt tr.pjs td.nm{padding-left:24px;max-width:260px}.pjt tr.pjs td.nm span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pjt tr.pjs td.nm b{font-size:13px;font-weight:600}@media (max-width:700px){.pjt tr.pjs{padding-left:28px}.pjt tr.pjs td.nm{max-width:none}}
 @media (min-width:760px){.th-segwrap{display:none}.subtabs{flex-wrap:wrap;row-gap:4px}.subtabs .grp{flex-wrap:wrap}.subtabs button{padding:7px 9px}}
 </style>
 
@@ -858,7 +858,7 @@ function nav(){const c=S.data.dn&&S.data.dtp?todoCount():0;
  if(role==="ceo"){sb.hidden=true;tt.innerHTML="";return;}
  sb.hidden=false;
  if(DN_SUB.includes(role)){tt.innerHTML='<span class="crumb">Dự án &amp; Nhân sự ›</span><span class="grp">'+[["gd","Dự án"],["pc","Phân công"],["ns","Nhân sự"]].map(t=>'<button type="button" data-role="'+t[0]+'"'+(role===t[0]?' aria-current="page"':'')+'>'+t[1]+'</button>').join("")+'</span>';return;}
- const NM={"th-qt":"Sơ đồ quy trình","th-bc":"Báo cáo quản trị","th-ks":"Kiểm soát & chốt sổ","danh-muc":"Danh mục"},nm=id=>NM[id]||VIEWS.find(v=>v.id===id).name;
+ const NM={"th-qt":"Quy trình và tổng quát","th-bc":"Báo cáo quản trị","th-ks":"Kiểm soát & chốt sổ","danh-muc":"Danh mục"},nm=id=>NM[id]||VIEWS.find(v=>v.id===id).name;
  const B=(id,no)=>'<button type="button" data-go="'+id+'"'+(curT===id?' aria-current="page"':'')+'>'+(no?'<span class="no">'+no+'</span>':'')+nm(id)+(id==="hom-nay"&&c?' ('+c+')':'')+'</button>';
  const flow=["hop-dong","ho-so","thau-phu"].map((id,i)=>B(id,i+1)).join('<span class="arr">›</span>');
  tt.innerHTML=''+
@@ -1713,11 +1713,21 @@ function vQuanTri(){
  const diff=T.tong.conTP-A.tot.all;
  h+='<section class="sec" id="sec-ap"><div class="sec-h"><h2>3. Phải trả thầu phụ · '+short(A.tot.all)+'</h2><span class="sub">Quy định trả trong '+TP_HAN+' ngày sau khi CĐT trả</span></div><div class="card kx-money">'+apBar(A)+(diff>1e6?'<div class="sub">Ngoài ra '+short(diff)+' giá trị HĐ thầu phụ chưa chia đợt.</div>':'')+'</div>'+
   (tpRows.length?'<div class="card tblwrap"><table class="sumtbl"><thead><tr><th>Thầu phụ</th>'+apL.map(c=>'<th>'+c[1]+'</th>').join("")+'<th>Tổng</th></tr></thead><tbody>'+tpRows.map(([n,v,q,t])=>'<tr class="click" data-act="open-tp" data-ten="'+esc(n)+'"><td class="nm"><b>'+esc(n.replace(/^CÔNG TY (CỔ PHẦN|TNHH)\s*/i,""))+'</b></td>'+apL.map(c=>{const x=v[c[0]];return '<td data-l="'+c[1]+'"'+(x>1?'':' class="zz"')+(x>1&&/q|unk/.test(c[0])?' style="color:var(--bad);font-weight:700"':'')+'>'+(x>1?vnd(x):'<span class="z">–</span>')+'</td>';}).join("")+'<td data-l="Tổng"><b>'+vnd(t)+'</b></td></tr>').join("")+'</tbody></table></div>':'<div class="card empty">Không còn khoản nào phải trả thầu phụ.</div>')+'</section>';
- /* 4. Hiệu quả dự án */
- const P=projRows();
- h+='<section class="sec" id="sec-pj"><div class="sec-h"><h2>4. Hiệu quả từng dự án</h2><span class="sub">Dự án có cảnh báo xếp trên · bấm để mở hợp đồng</span></div><div class="card tblwrap"><table class="sumtbl"><thead><tr><th>Dự án</th><th>Giá trị HĐ</th><th>Đã làm</th><th>Đã thu</th><th>Làm − thu</th><th>Lãi gộp</th><th class="l">Ghi chú</th></tr></thead><tbody>'+
-  P.map(p=>{const gap=p.dat!=null?p.dat-p.thu:null;return '<tr class="click" data-act="open-hd" data-ma="'+esc(p.ma)+'"><td class="nm"><b>'+esc(p.name)+'</b><span>'+esc(cdtShort(hdInfo(p.ma).cdt))+'</span></td><td data-l="Giá trị HĐ">'+short(p.gt)+'</td><td data-l="Đã làm">'+pctCell(p.dat)+'</td><td data-l="Đã thu">'+pctCell(p.thu)+'</td><td data-l="Làm − thu">'+(gap==null?'<span class="z">–</span>':'<b style="color:'+(gap>0.15?'var(--out)':'var(--ink2)')+'">'+(gap>0?'+':'')+Math.round(gap*100)+'%</b>')+'</td><td data-l="Lãi gộp">'+laiTxt(p)+'</td><td data-l="Ghi chú" class="pt-f">'+(p.flags.length?p.flags.map(f=>'<span class="pill '+f[0]+'">'+esc(f[1])+'</span>').join(""):'<span class="z">–</span>')+'</td></tr>';}).join("")+
-  '</tbody></table></div><p class="sub kx-note">Đã làm = phần giá trị HĐ đã đạt điều kiện thanh toán. “Làm − thu” dương nghĩa là làm nhiều hơn tiền đã thu. Lãi gộp (trước VAT) = HĐ CĐT − HĐ thầu phụ − chi phí dự án đã ghi Sổ thu chi; chưa trừ lương kiến trúc sư và chi phí chung. Dự án chưa có HĐ thầu phụ ghi “chưa đủ số liệu”.</p></section>';
+ /* 4. Hợp đồng, thầu phụ và lãi gộp — mỗi HĐ CĐT một dòng, bên dưới là các HĐ thầu phụ của nó */
+ const P=projRows().slice().sort((x,y)=>y.gt-x.gt),TPs=TP(),col=S.pjCol||{},allCol=P.length&&P.every(p=>col[p.ma]);
+ const cut=t=>t.replace(/^CÔNG TY (CỔ PHẦN|TNHH)\s*/i,"");
+ const sm=k=>P.reduce((a,p)=>a+(p.r[k]||0),0),okL=P.filter(p=>p.laiOk),sL=okL.reduce((a,p)=>a+p.lai,0),sB=okL.reduce((a,p)=>{const h=hdInfo(p.ma);return a+(h.gtTruoc||p.gt/(1+(h.vat>0?h.vat:0.08)));},0);
+ h+='<section class="sec" id="sec-pj"><div class="sec-h"><h2>4. Hợp đồng, thầu phụ và lãi gộp</h2><button class="btn sm" type="button" data-act="pj-all">'+(allCol?'Mở tất cả':'Thu gọn tất cả')+'</button></div><div class="card tblwrap"><table class="sumtbl pjt"><thead><tr><th>Hợp đồng / thầu phụ</th><th>Giá trị HĐ</th><th>Đã thu</th><th>Còn phải thu</th><th>HĐ thầu phụ</th><th>Đã chi TP</th><th>Còn phải chi TP</th><th>Lãi gộp</th><th class="l">Ghi chú</th></tr></thead><tbody>'+
+  P.map(p=>{const r=p.r,h=hdInfo(p.ma),ins=TPs.filter(c=>c.hd===p.ma),open=!col[p.ma],hb=hdBase(h),z=v=>v?vnd(v):'<span class="z">–</span>';
+   const gv=hb&&ins.some(c=>tpBase(c))?ins.reduce((a,c)=>a+tpBase(c),0)/hb:null;
+   return '<tr class="click pjh" data-act="pj-x" data-ma="'+esc(p.ma)+'"><td class="nm"><b>'+(ins.length?(open?'▾ ':'▸ '):'')+esc(p.name)+'</b><span>'+esc(cdtShort(h.cdt))+' · <a href="#" data-act="open-hd" data-ma="'+esc(p.ma)+'">mở HĐ</a></span></td>'+
+    '<td data-l="Giá trị HĐ">'+vnd(p.gt)+'</td><td data-l="Đã thu">'+z(r.thu)+(r.thu?' <span class="z">'+Math.round(p.thu*100)+'%</span>':'')+'</td><td data-l="Còn phải thu">'+z(r.con)+'</td>'+
+    '<td data-l="HĐ thầu phụ">'+z(r.gtTP)+(gv!=null?' <span class="z">'+pctTxt(gv)+'</span>':'')+'</td><td data-l="Đã chi TP">'+z(r.chiTP)+'</td><td data-l="Còn phải chi TP">'+z(r.conTP)+'</td>'+
+    '<td data-l="Lãi gộp">'+laiTxt(p)+'</td><td data-l="Ghi chú" class="pt-f">'+(p.flags.length?p.flags.map(f=>'<span class="pill '+f[0]+'">'+esc(f[1])+'</span>').join(""):'<span class="z">–</span>')+'</td></tr>'+
+    (open?ins.map(c=>'<tr class="click pjs" data-act="open-tp" data-ten="'+esc(c.ten)+'"><td class="nm"><b>'+esc(cut(c.ten))+'</b><span>'+esc(c.pv||c.ma)+'</span></td><td class="zz" data-l=""></td><td class="zz" data-l=""></td><td class="zz" data-l=""></td>'+
+     '<td data-l="Giá trị HĐ thầu phụ">'+(c.gt?vnd(c.gt)+(hb&&tpBase(c)?' <span class="z">'+pctTxt(tpBase(c)/hb)+'</span>':''):'<span class="z">chưa có giá trị</span>')+'</td><td data-l="Đã chi">'+z(c.chi)+'</td><td data-l="Còn phải chi">'+z(c.con)+'</td><td class="zz" data-l=""></td><td class="zz" data-l=""></td></tr>').join(""):'');}).join("")+
+  '</tbody><tfoot><tr><td class="nm"><b>Tổng cộng</b><span>'+P.length+' hợp đồng · '+TPs.filter(c=>P.some(p=>p.ma===c.hd)).length+' HĐ thầu phụ</span></td><td data-l="Giá trị HĐ">'+vnd(sm("gt"))+'</td><td data-l="Đã thu">'+vnd(sm("thu"))+'</td><td data-l="Còn phải thu">'+vnd(sm("con"))+'</td><td data-l="HĐ thầu phụ">'+vnd(sm("gtTP"))+'</td><td data-l="Đã chi TP">'+vnd(sm("chiTP"))+'</td><td data-l="Còn phải chi TP">'+vnd(sm("conTP"))+'</td><td data-l="Lãi gộp">'+(sB?'<b>'+Math.round(sL/sB*100)+'%</b> <span class="z">'+short(sL)+'</span>':'–')+'</td><td class="zz"></td></tr></tfoot></table></div>'+
+  '<p class="sub kx-note">Số tiền gồm VAT. % cạnh “HĐ thầu phụ” là giá vốn thầu phụ trên giá trị HĐ (trước VAT). Lãi gộp (trước VAT) = HĐ CĐT − HĐ thầu phụ − chi phí dự án đã ghi Sổ thu chi, chưa trừ lương kiến trúc sư và chi phí chung; dòng tổng chỉ cộng các hợp đồng đủ số liệu. Bấm một hợp đồng để mở/thu gọn danh sách thầu phụ, bấm một thầu phụ để xem chi tiết.</p></section>';
  /* 5. Dòng tiền sắp tới (tóm tắt, chi tiết ở Kế hoạch) */
  const R=cashFc(8),hb=S.cfBal!=null&&S.cfBal!=="",neg=R.W.filter(w=>(hb?w.bal:w.net)<0),fT=R.W.reduce((s,w)=>s+w.thu,0),fC=R.W.reduce((s,w)=>s+w.chi,0);
  h+='<section class="sec" id="sec-cf"><div class="sec-h"><h2>5. Dòng tiền 8 tuần tới</h2><span class="sub">Dự báo từ Kế hoạch thu chi</span></div><div class="card kx-link"><span>Dự kiến thu <b style="color:var(--in)">'+short(fT)+'</b> · chi <b style="color:var(--out)">'+short(fC)+'</b> · '+(neg.length?'<b style="color:var(--bad)">'+neg.length+' tuần '+(hb?'số dư âm':'chi nhiều hơn thu')+'</b>, sớm nhất tuần '+ddm(neg[0].a)+'–'+ddm(neg[0].b):'không có tuần nào '+(hb?'âm tiền':'chi nhiều hơn thu'))+(R.odSum>1?' · chưa tính '+short(R.odSum)+' CĐT quá hạn':'')+'</span><button class="btn sm" type="button" data-act="kh-go">Xem chi tiết ở Kế hoạch</button></div></section>';
@@ -2486,7 +2496,7 @@ document.addEventListener("click",ev=>{const t=ev.target.closest("[data-xl]");if
 const DN_SUB=["gd","pc","ns"];
 function dnTabs(){return '<section class="sec"><div class="seg dn-seg" role="group" aria-label="Dự án và nhân sự">'+[["gd","Dự án"],["pc","Phân công"],["ns","Nhân sự"]].map(t=>'<button type="button" data-role="'+t[0]+'" aria-pressed="'+(S.role===t[0])+'">'+t[1]+'</button>').join("")+'</div></section>';}
 function vTongHop(){const tab=S.thTab||"bc";
- const T=[["qt","Sơ đồ quy trình"],["bc","Báo cáo quản trị"],["ks","Kiểm soát & chốt sổ"]];
+ const T=[["qt","Quy trình và tổng quát"],["bc","Báo cáo quản trị"],["ks","Kiểm soát & chốt sổ"]];
  const seg='<div class="seg th-seg" role="group" aria-label="Báo cáo">'+T.map(x=>'<button type="button" data-act="th-tab" data-t="'+x[0]+'" aria-pressed="'+(tab===x[0])+'">'+x[1]+'</button>').join("")+'</div>';
  return '<section class="sec th-segwrap">'+seg+'</section>'+(tab==="qt"?vQuyTrinh():tab==="ks"?vKiemSoat():vQuanTri());}
 /* ---------- DỰ BÁO DÒNG TIỀN 8 TUẦN ----------
@@ -2686,7 +2696,7 @@ function vQuyTrinh(){
  const noL=H.filter(h=>!O.some(d=>d.hd===h.ma)).length,wipV=m.wip.reduce((a,x)=>a+x.phai,0),unV=m.unsent.reduce((a,x)=>a+x.con,0),ar=m.age.reduce((a,b)=>a+b,0),od=m.age[1]+m.age[2]+m.age[3];
  const F=flows("thang"),fin=F.reduce((a,x)=>a+x.thu,0),fout=F.filter(x=>x.hd).reduce((a,x)=>a+x.chi,0);
  const tpNoL=TPs.filter(c=>!m.P.some(d=>d.hdtp===c.ma)).length,waitV=m.P.filter(d=>d.con>1&&d.han<=1).reduce((a,d)=>a+d.con,0),waitN=m.P.filter(d=>d.con>1&&d.han<=1).length,dueN=m.P.filter(d=>d.han>1).length;
- let h='<div class="hub"><div class="card hubcard"><h3>Sơ đồ quy trình hợp đồng</h3><div class="sub" style="text-align:center">Số tròn trên mỗi bước = việc đang nằm ở bước đó · bấm để xử lý</div>';
+ let h='<div class="hub"><div class="card hubcard"><h3>Quy trình hợp đồng</h3><div class="sub" style="text-align:center">Số tròn trên mỗi bước = việc đang nằm ở bước đó · bấm để xử lý</div>';
  h+='<div class="lane out"><div class="lane-h"><span class="tag out">ĐẦU RA</span>Hợp đồng với chủ đầu tư · tiền vào</div><div class="flow">'+
   fnode("sign","Ký HĐ chủ đầu tư",H.length+" hợp đồng · "+short(H.reduce((a,x)=>a+x.gtSau,0)),{n:H.length},"hub-go",' data-to="tree-out"')+
   fnode("cal","Lập lịch đợt",noL?noL+" HĐ chưa có lịch":"Đủ lịch",noL?{n:noL,c:"warn"}:null,"hub-go",' data-to="tree-out"')+
@@ -2704,7 +2714,7 @@ function vQuyTrinh(){
  // reports
  const E=excList(m);
  h+='<div class="card reps"><h3>Báo cáo</h3>'+
-  [["exc","Việc cần xử lý (Hôm nay)",E.length+" việc"],["cf","Dòng tiền 8 tuần tới (Kế hoạch)",(()=>{const W=cashFc().W,hb=S.cfBal!=null&&S.cfBal!=="",n=W.filter(w=>(hb?w.bal:w.net)<0).length;return n?n+" tuần âm":"";})()],["viec-xong","Việc đã làm, chưa gửi / chưa thu / chưa xuất HĐ",DOT().filter(x=>x.thieu).length+" đợt"],["age","Công nợ phải thu theo chủ đầu tư",short(ar)],["ap","Công nợ phải trả theo thầu phụ",short(apStats().tot.all)],["pj","Hiệu quả từng dự án (làm, thu, lãi gộp)",""],["kq","Kết quả thu chi trong kỳ",""],["tree-out","Cây hợp đồng đầu ra → đầu vào",H.length+" dự án"]].map(r=>'<button type="button" data-act="hub-go" data-to="'+r[0]+'"><span class="dot"></span>'+r[1]+'<small>'+r[2]+'</small></button>').join("")+
+  [["exc","Việc cần xử lý (Hôm nay)",E.length+" việc"],["cf","Dòng tiền 8 tuần tới (Kế hoạch)",(()=>{const W=cashFc().W,hb=S.cfBal!=null&&S.cfBal!=="",n=W.filter(w=>(hb?w.bal:w.net)<0).length;return n?n+" tuần âm":"";})()],["viec-xong","Việc đã làm, chưa gửi / chưa thu / chưa xuất HĐ",DOT().filter(x=>x.thieu).length+" đợt"],["age","Công nợ phải thu theo chủ đầu tư",short(ar)],["ap","Công nợ phải trả theo thầu phụ",short(apStats().tot.all)],["pj","Hợp đồng, thầu phụ và lãi gộp",""],["kq","Kết quả thu chi trong kỳ",""],["tree-out","Cây hợp đồng đầu ra → đầu vào",H.length+" dự án"]].map(r=>'<button type="button" data-act="hub-go" data-to="'+r[0]+'"><span class="dot"></span>'+r[1]+'<small>'+r[2]+'</small></button>').join("")+
   '<a href="'+SHEET_URL+'#gid='+PRINT_GID+'" target="_blank" rel="noopener"><span class="dot"></span>Trang in giấy đề nghị thanh toán<small>Sheet ↗</small></a><a href="'+SHEET_URL+'" target="_blank" rel="noopener"><span class="dot"></span>Mở file Google Sheet<small>↗</small></a></div></div>';
  // quick links
  h+='<div class="card qlinks">'+[["plus","HĐ chủ đầu tư","nf-new",' data-t="cdt"'],["plus","HĐ thầu phụ","nf-new",' data-t="tp"'],["book","Ghi sổ thu chi","hub-go",' data-to="ghi-so"'],["users","Danh mục đối tượng","hub-go",' data-to="danh-muc"'],["sheet","Hồ sơ thanh toán","hub-go",' data-to="hs"']].map(q=>'<button type="button" data-act="'+q[2]+'"'+q[3]+'>'+IC[q[0]]+q[1]+'</button>').join("")+'</div>';
@@ -3385,6 +3395,8 @@ document.addEventListener("click",ev=>{
  else if(a==="pv-close")closePrint();
  else if(a==="pv-print"){try{window.print();}catch(e){toast("Trình duyệt chặn lệnh in. Dùng nút “In bằng Google Sheet”.");}}
  else if(a==="hs-sheetprint"){closePrint();hsPrint(t.dataset.ma);}
+ else if(a==="pj-x"){S.pjCol=S.pjCol||{};S.pjCol[t.dataset.ma]=!S.pjCol[t.dataset.ma];render(true);}
+ else if(a==="pj-all"){const P=projRows(),c=S.pjCol||{},all=P.length&&P.every(p=>c[p.ma]);S.pjCol={};if(!all)P.forEach(p=>S.pjCol[p.ma]=true);render(true);}
  else if(a==="qt-per"){S.qtPer=t.dataset.k;ls.set("hba.qtper",S.qtPer);render();}
  else if(a==="th-tab"){S.thTab=t.dataset.t;ls.set("hba.th",S.thTab);render();}
  else if(a==="hub-go")hubGo(t.dataset.to);
