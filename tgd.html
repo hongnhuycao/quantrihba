@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.pc-act{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.btn.pc-del{color:var(--bad,#c0392b)}
+</style></head><body>
 <script>
 /* Cổng mật khẩu: mỗi lần mở link đều phải nhập. Chỉ khi tải lại trong cùng một tab thì không hỏi lại.
    Link có sẵn ?k= từ nơi khác cũng bị hỏi mật khẩu. Đuôi ?k= được xóa khỏi thanh địa chỉ sau khi trang mở. */
@@ -1144,7 +1145,7 @@ window.BR=(function(){
   busy=false;bar();}
  document.addEventListener("click",ev=>{if(ev.target.closest("#tgdpub"))publish();},true);
  /* bản chỉ đọc: chặn mọi thao tác sửa ở Phân công */
- const EDIT=["edit","save","add","add-col","add-week","add-name","rm","c-edit","c-save","np-open","np-save","pick"];
+ const EDIT=["edit","save","add","add-col","add-week","add-name","rm","c-edit","c-save","np-open","np-save","pick","del"];
  document.addEventListener("click",ev=>{if(!ro)return;const t=ev.target.closest("[data-pc]");if(t&&EDIT.includes(t.dataset.pc)){ev.stopPropagation();ev.preventDefault();}},true);
  setInterval(()=>{if(real&&live&&!ro&&!window.HBA_GH){NEED.forEach(n=>{delete REC[K(n[0],n[1])];});checkAll();}},15*60000);
  return {mcp};
@@ -2926,27 +2927,43 @@ function vPhanCong(){wkEnsure();nsEnsure();
      '<div class="pc-sug"><span class="sub">Bấm để thêm:</span>'+shorts.map(n=>'<button type="button" class="ns-chip" data-pc="add-name" data-n="'+esc(n)+'">'+esc(n)+'</button>').join("")+'</div>'+
      '<label class="fld">Người phụ trách dự án (cả cột)<input id="pcf-lead" type="text" value="'+esc(c.lead)+'"></label>'+
      (w.prow?'':'<div class="msg warn"><b>Tuần này chưa có dòng nhân sự trong file</b><span>Chỉ lưu được nội dung. Thêm một dòng trống ngay dưới tuần trong file để ghi nhân sự.</span></div>')+
-     '<div class="kx-acts"><button class="btn pri sm" type="button" data-pc="save" data-k="'+key+'"'+(S.pc.busy?' disabled':'')+'>'+(S.pc.busy?'Đang ghi vào file…':'Lưu vào file GĐDA')+'</button><button class="btn sm" type="button" data-pc="cancel">Hủy</button></div></div>';}
+     '<div class="kx-acts"><button class="btn pri sm" type="button" data-pc="save" data-k="'+key+'">Lưu</button><button class="btn sm" type="button" data-pc="cancel">Hủy</button>'+(cell.nd||cell.ns.length?'<button class="btn sm pc-del" type="button" data-pc="del" data-k="'+key+'" style="margin-left:auto">🗑 Xóa dự án khỏi tuần này</button>':'')+'</div></div>';}
    else{h+='<div class="pc-nd">'+(cell.nd?esc(cell.nd).replace(/\n/g,"<br>"):'<span class="sub">Chưa ghi nội dung</span>')+'</div><div class="ns-chips" style="padding:6px 0 0">'+(cell.ns.length?cell.ns.map(p=>{const d=pcLeave(p.full,w);return wkNameHtml(p).replace('</span>',(d?' <b class="pc-off">nghỉ '+String(d).replace(".",",")+'n</b>':'')+'</span>');}).join(""):'<span class="sub">Chưa phân người</span>')+'</div>'+
-    '<div class="pc-act"><button class="btn sm" type="button" data-pc="edit" data-k="'+key+'"'+(!mcp?' disabled':'')+'>Kê khai / sửa</button></div>';}
+    '<div class="pc-act"><button class="btn sm" type="button" data-pc="edit" data-k="'+key+'"'+(!mcp?' disabled':'')+'>Kê khai / sửa</button>'+(cell.nd||cell.ns.length?'<button class="btn sm pc-del" type="button" data-pc="del" data-k="'+key+'"'+(!mcp?' disabled':'')+' title="Xóa dự án này khỏi tuần '+esc(w.label)+' (kê khai dư)">🗑 Xóa</button>':'')+'</div>';}
    h+='</div>';});
   h+='</div></section>';});
  h+='<p class="sub kx-note">Danh sách và thứ tự dự án theo Sheet hợp đồng (tab “Quản trị dự án”); cột mới được thêm vào cuối file, tên kèm mã dự án trong ngoặc. Mỗi lần lưu, app ghi lại ai sửa, lúc nào trong tab “Nhật ký app”.</p>';
  return h;}
-async function pcSave(key){const [wi,ci]=key.split(":").map(Number);const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
+/* Lưu ngay: cập nhật bảng trên màn hình trước, ghi vào file GĐDA ở nền (xếp hàng lần lượt). Lỗi thì báo và tải lại. */
+let PCQ=Promise.resolve(),PCN=0;
+function pcLocal(row,col,v){const D=S.wk.data;if(!D)return;while(D.length<row)D.push([]);const r=D[row-1]||(D[row-1]=[]);while(r.length<=col)r.push("");r[col]=v;}
+function pcBg(w,list,okMsg){/* list: [{row,col,value,what}] */
+ list.forEach(x=>pcLocal(x.row,x.col,x.value));PCN++;pcPend();
+ const label=w.label,lrow=w.row;
+ PCQ=PCQ.then(async()=>{needMcp();
+  const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+lrow},{cache:false}));
+  if(g(chk[0],0).trim()!==label)throw {code:"x",message:"File vừa có thay đổi (dòng tuần không còn ở vị trí cũ), chưa ghi được. App đã tải lại, bạn làm lại nhé."};
+  for(const x of list){const L=pcCol(x.col),v=String(x.value||"");
+   await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+x.row,formulas:[[/^[=+\-@]/.test(v)?"'"+v:v]]});
+   logW("Lịch tuần GĐDA "+L+x.row+(x.what?" ("+x.what+")":""),[[v]]);}
+ }).then(()=>{PCN--;pcPend();if(!PCN&&okMsg)toast(okMsg);},e=>{PCN--;pcPend();toast(e&&e.code==="x"?e.message:errText(e,true));wkLoad(true);});
+ render();}
+function pcPend(){let b=document.getElementById("pc-pend");if(!b){b=document.createElement("div");b.id="pc-pend";b.style.cssText="position:fixed;right:14px;bottom:14px;z-index:60;background:var(--card,#fff);border:1px solid var(--line,#ccd);border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)";document.body.appendChild(b);}
+ b.hidden=!PCN;b.textContent="Đang ghi vào file GĐDA… ("+PCN+")";}
+window.addEventListener("beforeunload",ev=>{if(PCN){ev.preventDefault();ev.returnValue="";}});
+function pcSave(key){const [wi,ci]=key.split(":").map(Number);const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
  const nd=(document.getElementById("pcf-nd")||{}).value||"",ns=((document.getElementById("pcf-ns")||{}).value||"").split(",").map(x=>x.trim()).filter(Boolean).join(", "),lead=((document.getElementById("pcf-lead")||{}).value||"").trim();
- const L=pcCol(col.c),T=s=>{s=String(s||"");return /^[=+\-@]/.test(s)?"'"+s:s;};
- S.pc.busy=true;render();
- try{needMcp();const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+w.row},{cache:false}));
-  if(g(chk[0],0).trim()!==w.label)throw {code:"x",message:"File vừa có thay đổi (dòng tuần không còn ở vị trí cũ). App đã tải lại, bạn mở sửa lại nhé."};
-  const put1=async(r,v)=>{await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+r,formulas:[[T(v)]]});logW("Lịch tuần GĐDA "+L+r,[[v]]);};
-  if(nd!==w.cells[ci].nd)await put1(w.row,nd);
-  const oldNs=w.cells[ci].ns.map(p=>p.short+(p.note?" ("+p.note+")":"")).join(", ");
-  if(w.prow&&ns!==oldNs)await put1(w.prow,ns);
-  if(lead!==col.lead)await put1(P.leadRow,lead);
-  S.pc.edit="";toast("Đã lưu vào file của Giám đốc dự án");}
- catch(e){toast(e&&e.code==="x"?e.message:errText(e,true));}
- S.pc.busy=false;await wkLoad(true);}
+ const list=[];if(nd!==w.cells[ci].nd)list.push({row:w.row,col:col.c,value:nd,what:"nội dung"});
+ const oldNs=w.cells[ci].ns.map(p=>p.short+(p.note?" ("+p.note+")":"")).join(", ");
+ if(w.prow&&ns!==oldNs)list.push({row:w.prow,col:col.c,value:ns,what:"nhân sự"});
+ if(lead!==col.lead)list.push({row:P.leadRow,col:col.c,value:lead,what:"phụ trách"});
+ S.pc.edit="";if(!list.length){render();toast("Không có gì thay đổi");return;}
+ toast("Đã lưu");pcBg(w,list,"Đã ghi xong vào file của Giám đốc dự án");}
+/* Xóa dự án khỏi 1 tuần (kê khai dư): xóa nội dung + nhân sự của ô tuần đó */
+function pcDel(key){const [wi,ci]=key.split(":").map(Number);const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
+ if(!confirm("Xóa dự án “"+col.name+"” khỏi tuần "+w.label+"?\nNội dung công việc và nhân sự của tuần này ở dự án này sẽ bị xóa trong file GĐDA."))return;
+ const list=[{row:w.row,col:col.c,value:"",what:"xóa kê khai"}];if(w.prow)list.push({row:w.prow,col:col.c,value:"",what:"xóa kê khai"});
+ S.pc.edit="";toast("Đã xóa "+col.name+" khỏi tuần "+w.label);pcBg(w,list,"Đã ghi xong vào file của Giám đốc dự án");}
 function pcColName(q,code){const H=HD().find(h=>h.ma===q.ma);let n=(H&&H.ten)||kxName(q.ma);const parts=n.split(/\s+[–-]\s+/);n=parts[parts.length-1].trim();if(n===n.toUpperCase())n=n.toLowerCase().replace(/(^|\s)(\S)/g,(m,p,c)=>p+c.toUpperCase());if(n.length>34)n=kxName(q.ma);return n+" ("+code+")";}
 async function pcAddCol(ma){const P=wkRows(),q=QTDA().find(x=>x.ma===ma);if(!q||!q.hr)return;const code=String(q.hr).toUpperCase().split(/[,;\s]+/)[0];
  const c=Math.max(...P.cols.map(x=>x.c))+1;if(c>24){toast("File đã dùng hết cột A–Y, thêm cột trực tiếp trong file nhé.");return;}
@@ -2974,7 +2991,8 @@ document.addEventListener("click",ev=>{const t=ev.target.closest("[data-pc]");if
  else if(a==="edit"){S.pc.edit=t.dataset.k;if(S.kx)S.kx.noKeep=true;render();setTimeout(()=>{const e=document.getElementById("pcf-nd");if(e)e.focus();},0);}
  else if(a==="cancel"){S.pc.edit="";render();}
  else if(a==="add-name"){const e=document.getElementById("pcf-ns");if(!e)return;const L=e.value.split(",").map(x=>x.trim()).filter(Boolean);if(!L.includes(t.dataset.n))L.push(t.dataset.n);e.value=L.join(", ");}
- else if(a==="save"){if(!S.pc.busy)pcSave(t.dataset.k);}
+ else if(a==="save"){pcSave(t.dataset.k);}
+ else if(a==="del"){pcDel(t.dataset.k);}
  else if(a==="add-week"){if(!S.pc.busy)pcAddWeek();}
  else if(a==="add-col"){if(!S.pc.busy)pcAddCol(t.dataset.ma);}});
 /* ---- Phân công dạng bảng (giống file của GĐDA): dòng = tuần, cột = dự án; bấm + để thêm người, × để bỏ ---- */
@@ -2987,17 +3005,11 @@ async function pcWriteCell(w,row,col,value,what){needMcp();
  const L=pcCol(col),v=String(value||"");
  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+row,formulas:[[/^[=+\-@]/.test(v)?"'"+v:v]]});
  logW("Lịch tuần GĐDA "+L+row+(what?" ("+what+")":""),[[v]]);}
-async function pcSetStaff(wi,ci,list,msg){const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
+function pcSetStaff(wi,ci,list,msg){const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
  if(!w.prow){toast("Tuần này chưa có dòng nhân sự trong file.");return;}
- S.pc.busyCell=wi+":"+ci;S.pc.busy=true;render();
- try{await pcWriteCell(w,w.prow,col.c,list.join(", "),"nhân sự");toast(msg||"Đã lưu");}
- catch(e){toast(e&&e.code==="x"?e.message:errText(e,true));}
- S.pc.busy=false;S.pc.busyCell="";await wkLoad(true);}
-async function pcSetContent(wi,ci,text){const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
- S.pc.busyCell=wi+":"+ci;S.pc.busy=true;render();
- try{await pcWriteCell(w,w.row,col.c,text,"nội dung");S.pc.cedit="";toast("Đã lưu nội dung");}
- catch(e){toast(e&&e.code==="x"?e.message:errText(e,true));}
- S.pc.busy=false;S.pc.busyCell="";await wkLoad(true);}
+ toast(msg||"Đã lưu");pcBg(w,[{row:w.prow,col:col.c,value:list.join(", "),what:"nhân sự"}]);}
+function pcSetContent(wi,ci,text){const P=wkRows(),w=P.weeks[wi],col=P.cols[ci];if(!w||!col)return;
+ S.pc.cedit="";toast("Đã lưu nội dung");pcBg(w,[{row:w.row,col:col.c,value:text,what:"nội dung"}]);}
 function pcGrid(P){const cols=pcColsOrdered(P).filter(c=>!pcColHidden(c)),cur=wkCur(P),t0=d0(new Date());
  let h='<div class="card pcg-wrap"><table class="pcg" style="min-width:'+(104+cols.length*128)+'px"><thead><tr><th class="pcg-t">Thời gian</th>'+cols.map(c=>'<th><button type="button" class="pcg-hide" data-pc="hide-col" data-n="'+esc(c.name)+'" title="Ẩn dự án này khỏi bảng" aria-label="Ẩn '+esc(c.name)+'">×</button><b>'+esc(c.name)+'</b>'+(c.code?'<small>'+esc(c.code)+'</small>':'')+'</th>').join("")+'</tr>'+
   '<tr class="pcg-lead"><th class="pcg-t">'+esc(String(P.weeks[0]?P.weeks[0].d.getFullYear():""))+'</th>'+cols.map(c=>'<th>'+esc(c.lead||"–")+'</th>').join("")+'</tr></thead><tbody>';
