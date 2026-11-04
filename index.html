@@ -13,42 +13,68 @@ document.write('<div id="hba-gate" style="position:fixed;inset:0;z-index:2147483
 document.getElementById("hba-gf").addEventListener("submit",function(e){e.preventDefault();var v=document.getElementById("hba-gp").value.trim();if(!v)return;sv(v);u.searchParams.set("k",v);location.replace(u.toString());});
 })();
 </script>
-
 <script>
-/* HBA trên GitHub Pages: thay kết nối Google Sheets của claude.ai bằng cầu nối Apps Script (CHỈ ĐỌC). */
+/* HBA trên GitHub Pages: thay kết nối Google Sheets của claude.ai bằng cầu nối Apps Script.
+   false = true: được ghi (link TGĐ: phân công, thêm dự án…); false: chỉ xem (link gốc). */
 (function(){
+ const RW=false;
  const API="https://script.google.com/macros/s/AKfycbyOy5O0ZO7AN3XScmxp8ZflWZSu8NqYOR-qd08TCJ1RIY5iS3yUF0xATiiFl8QvwR8N/exec";
  const KEY=new URLSearchParams(location.search).get("k")||"";
- const RO={code:"read_only",message:"Bản trên GitHub chỉ xem. Muốn sửa hoặc ghi sổ, mở app trên claude.ai."};
- let Q=[],T=null;
- function flush(){const q=Q;Q=[];T=null;
-  for(let i=0;i<q.length;i+=25){const part=q.slice(i,i+25);
-   fetch(API+"?k="+encodeURIComponent(KEY)+"&q="+encodeURIComponent(JSON.stringify(part.map(x=>[x.id,x.range])))+"&t="+Date.now(),{cache:"no-store"})
-    .then(r=>r.ok?r.json():Promise.reject({code:"network",message:"HTTP "+r.status}))
-    .then(d=>{if(d.error==="bad_key"){try{sessionStorage.removeItem("hba_pass")}catch(e){}}if(d.error)throw {code:d.error==="bad_key"?"not_granted":d.error,message:d.error==="bad_key"?"Đường link thiếu hoặc sai mã truy cập.":d.error};
-      part.forEach((x,j)=>{const r=d.res&&d.res[j];if(!r||r.error)x.no({code:(r&&r.error)||"tool_error",message:(r&&r.message)||"Không đọc được vùng "+x.range});else x.ok({payload:{range:r.range,values:r.values},cache:{storedAt:d.at}});});})
-    .catch(e=>{const err=e&&e.code?e:{code:"network",message:"Không kết nối được, kiểm tra mạng rồi tải lại trang."};part.forEach(x=>x.no(err));});}}
- /* Mở là có số ngay: vùng nào đã lưu trên máy này thì trả ngay, đồng thời tải số mới; số mới khác thì cập nhật. */
+ const MAIN="1jsd_dKx4zJAaerH_7gydFbYkM-nIfzX1Znn7hg4id3A",SET_RANGE="'_CaiDatApp'!A1:B10";
+ const SET_ROW={"settings/kehoach":1,"settings/phancong":2};
+ const RO={code:"read_only",message:"Link này chỉ xem. Muốn sửa hoặc ghi sổ, mở app trên claude.ai."};
+ window.HBA_GH=true;
+ function badKey(){try{sessionStorage.removeItem("hba_pass")}catch(e){}}
+ /* bộ nhớ trên máy: mở là có số ngay */
  const LSP="hba_idx_"+KEY+"_";
  function lsGet(k){try{const t=localStorage.getItem(LSP+k);return t?JSON.parse(t):null}catch(e){return null}}
  function lsSet(k,r){try{localStorage.setItem(LSP+k,JSON.stringify(r))}catch(e){}}
- function net(input){return new Promise((ok,no)=>{Q.push({id:input.spreadsheetId,range:input.range,ok,no});if(!T)T=setTimeout(flush,40);});}
- function get(input,onNew){const k=input.spreadsheetId+"|"+input.range,c=lsGet(k),p=net(input).then(r=>{lsSet(k,r);return r;});
+ function lsDrop(id){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(LSP+id+"|")===0)ks.push(k);}ks.forEach(k=>localStorage.removeItem(k));}catch(e){}}
+ /* đọc: gom nhiều vùng vào một lần gọi */
+ let Q=[],T=null;
+ function flush(){const q=Q;Q=[];T=null;
+  [false,true].forEach(nc=>{const L=q.filter(x=>!!x.nc===nc);
+   for(let i=0;i<L.length;i+=25){const part=L.slice(i,i+25);
+    fetch(API+"?k="+encodeURIComponent(KEY)+(nc?"&nc=1":"")+"&q="+encodeURIComponent(JSON.stringify(part.map(x=>[x.id,x.range])))+"&t="+Date.now(),{cache:"no-store"})
+     .then(r=>r.ok?r.json():Promise.reject({code:"network",message:"HTTP "+r.status}))
+     .then(d=>{if(d.error==="bad_key")badKey();if(d.error)throw {code:d.error==="bad_key"?"not_granted":d.error,message:d.error==="bad_key"?"Sai mật khẩu.":d.error};
+       part.forEach((x,j)=>{const r=d.res&&d.res[j];if(!r||r.error)x.no({code:(r&&r.error)||"tool_error",message:(r&&r.message)||"Không đọc được vùng "+x.range});else x.ok({payload:{range:r.range,values:r.values},cache:{storedAt:d.at}});});})
+     .catch(e=>{const err=e&&e.code?e:{code:"network",message:"Không kết nối được, kiểm tra mạng rồi tải lại trang."};part.forEach(x=>x.no(err));});}});}
+ function net(input,nc){return new Promise((ok,no)=>{Q.push({id:input.spreadsheetId,range:input.range,nc,ok,no});if(!T)T=setTimeout(flush,40);});}
+ function get(input,onNew,fresh){const k=input.spreadsheetId+"|"+input.range,c=fresh?null:lsGet(k),p=net(input,fresh).then(r=>{lsSet(k,r);return r;});
   if(!c)return p;
   p.then(r=>{if(onNew&&JSON.stringify(r.payload.values)!==JSON.stringify(c.payload.values))onNew(r);}).catch(()=>{});
   return Promise.resolve(c);}
+ /* ghi */
+ async function put(input){if(!RW)throw RO;
+  const r=await fetch(API,{method:"POST",body:JSON.stringify({k:KEY,op:"update",id:input.spreadsheetId,range:input.range,values:input.formulas||input.values||[]})});
+  if(!r.ok)throw {code:"network",message:"Không ghi được (HTTP "+r.status+"). Thử lại."};
+  const d=await r.json();if(d.error==="bad_key")badKey();
+  if(d.error)throw {code:d.error,message:d.message||("Không ghi được: "+d.error)};
+  lsDrop(input.spreadsheetId);
+  return {payload:{updatedRange:d.updatedRange||input.range,updatedRows:(input.formulas||input.values||[]).length},cache:{storedAt:d.at}};}
  const W=new Set();
- function run(w){get(w.input,r=>{if(w.on)w.h({type:"data",result:r});}).then(r=>{if(w.on)w.h({type:"data",result:r});},e=>{if(w.on)w.h({type:"error",error:e});});}
+ function run(w,fresh){get(w.input,r=>{if(w.on)w.h({type:"data",result:r});},fresh).then(r=>{if(w.on)w.h({type:"data",result:r});},e=>{if(w.on)w.h({type:"error",error:e});});}
  const mcp={
-  async callTool(srv,tool,input){if(tool!=="get_values")throw RO;return get(input);},
-  watchTool(srv,tool,input,h){const w={input,h,on:true};if(tool!=="get_values"){setTimeout(()=>h({type:"error",error:RO}),0);return ()=>{};}W.add(w);run(w);return ()=>{w.on=false;W.delete(w);};},
-  async invalidate(){W.forEach(run);},
+  async callTool(srv,tool,input,opts){
+   if(tool==="get_values")return get(input,null,!!(opts&&opts.cache===false));
+   if(tool==="update_formulas"||tool==="update_values")return put(input);
+   throw RO;},
+  watchTool(srv,tool,input,h){const w={input,h,on:true};if(tool!=="get_values"){setTimeout(()=>h({type:"error",error:RO}),0);return ()=>{};}W.add(w);run(w,false);return ()=>{w.on=false;W.delete(w);};},
+  async invalidate(srv,tool,input){W.forEach(w=>{if(!input||!input.spreadsheetId||w.input.spreadsheetId===input.spreadsheetId)run(w,true);});},
   async describeTool(){throw {code:"unavailable"};}
  };
  /* đang mở trang: 10 phút đọc lại một lần */
- setInterval(()=>{if(!document.hidden)W.forEach(run);},10*60000);
+ setInterval(()=>{if(!document.hidden)W.forEach(w=>run(w,false));},10*60000);
+ /* Cài đặt dùng chung (số dư đầu kỳ ở Kế hoạch, ẩn cột/tuần ở Phân công): lưu ở trang _CaiDatApp của sheet chính */
+ async function setAll(){const r=await get({spreadsheetId:MAIN,range:SET_RANGE},null,true);const o={};(r.payload.values||[]).forEach(x=>{if(x&&x[0])o[x[0]]=x[1]||"";});return o;}
+ const db={doc(path){return {
+   async get(){if(!SET_ROW[path])return {exists:false,data:()=>undefined};const o=await setAll();const t=o[path];let v;try{v=t?JSON.parse(t):undefined}catch(e){v=undefined}return {exists:v!==undefined,data:()=>v};},
+   async set(v){const row=SET_ROW[path];if(!RW||!row)throw RO;await put({spreadsheetId:MAIN,range:"'_CaiDatApp'!A"+row+":B"+row,formulas:[[path,JSON.stringify(v)]]});},
+   async update(v){const row=SET_ROW[path];if(!RW||!row)throw RO;const o=await setAll();let cur={};try{cur=JSON.parse(o[path]||"{}")}catch(e){}await this.set(Object.assign(cur,v));}
+  };}};
  const downloads={async save(o){const b=o.data instanceof Blob?o.data:new Blob([o.data]);const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=o.filename||"file";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);}};
- window.claude={use:async n=>n==="mcp"?mcp:n==="downloads"?downloads:null};
+ window.claude={use:async n=>n==="mcp"?mcp:n==="downloads"?downloads:n==="db"?db:null};
 })();
 </script>
 
