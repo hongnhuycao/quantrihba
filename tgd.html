@@ -13,6 +13,70 @@ document.write('<div id="hba-gate" style="position:fixed;inset:0;z-index:2147483
 document.getElementById("hba-gf").addEventListener("submit",function(e){e.preventDefault();var v=document.getElementById("hba-gp").value.trim();if(!v)return;sv(v);u.searchParams.set("k",v);location.replace(u.toString());});
 })();
 </script>
+<script>
+/* HBA trên GitHub Pages: thay kết nối Google Sheets của claude.ai bằng cầu nối Apps Script.
+   true = true: được ghi (link TGĐ: phân công, thêm dự án…); false: chỉ xem (link gốc). */
+(function(){
+ const RW=true;
+ const API="https://script.google.com/macros/s/AKfycbyOy5O0ZO7AN3XScmxp8ZflWZSu8NqYOR-qd08TCJ1RIY5iS3yUF0xATiiFl8QvwR8N/exec";
+ const KEY=new URLSearchParams(location.search).get("k")||"";
+ const MAIN="1jsd_dKx4zJAaerH_7gydFbYkM-nIfzX1Znn7hg4id3A",SET_RANGE="'_CaiDatApp'!A1:B10";
+ const SET_ROW={"settings/kehoach":1,"settings/phancong":2};
+ const RO={code:"read_only",message:"Link này chỉ xem. Muốn sửa hoặc ghi sổ, mở app trên claude.ai."};
+ window.HBA_GH=true;
+ function badKey(){try{sessionStorage.removeItem("hba_pass")}catch(e){}}
+ /* bộ nhớ trên máy: mở là có số ngay */
+ const LSP="hba_idx_"+KEY+"_";
+ function lsGet(k){try{const t=localStorage.getItem(LSP+k);return t?JSON.parse(t):null}catch(e){return null}}
+ function lsSet(k,r){try{localStorage.setItem(LSP+k,JSON.stringify(r))}catch(e){}}
+ function lsDrop(id){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(LSP+id+"|")===0)ks.push(k);}ks.forEach(k=>localStorage.removeItem(k));}catch(e){}}
+ /* đọc: gom nhiều vùng vào một lần gọi */
+ let Q=[],T=null;
+ function flush(){const q=Q;Q=[];T=null;
+  [false,true].forEach(nc=>{const L=q.filter(x=>!!x.nc===nc);
+   for(let i=0;i<L.length;i+=25){const part=L.slice(i,i+25);
+    fetch(API+"?k="+encodeURIComponent(KEY)+(nc?"&nc=1":"")+"&q="+encodeURIComponent(JSON.stringify(part.map(x=>[x.id,x.range])))+"&t="+Date.now(),{cache:"no-store"})
+     .then(r=>r.ok?r.json():Promise.reject({code:"network",message:"HTTP "+r.status}))
+     .then(d=>{if(d.error==="bad_key")badKey();if(d.error)throw {code:d.error==="bad_key"?"not_granted":d.error,message:d.error==="bad_key"?"Sai mật khẩu.":d.error};
+       part.forEach((x,j)=>{const r=d.res&&d.res[j];if(!r||r.error)x.no({code:(r&&r.error)||"tool_error",message:(r&&r.message)||"Không đọc được vùng "+x.range});else x.ok({payload:{range:r.range,values:r.values},cache:{storedAt:d.at}});});})
+     .catch(e=>{const err=e&&e.code?e:{code:"network",message:"Không kết nối được, kiểm tra mạng rồi tải lại trang."};part.forEach(x=>x.no(err));});}});}
+ function net(input,nc){return new Promise((ok,no)=>{Q.push({id:input.spreadsheetId,range:input.range,nc,ok,no});if(!T)T=setTimeout(flush,40);});}
+ function get(input,onNew,fresh){const k=input.spreadsheetId+"|"+input.range,c=fresh?null:lsGet(k),p=net(input,fresh).then(r=>{lsSet(k,r);return r;});
+  if(!c)return p;
+  p.then(r=>{if(onNew&&JSON.stringify(r.payload.values)!==JSON.stringify(c.payload.values))onNew(r);}).catch(()=>{});
+  return Promise.resolve(c);}
+ /* ghi */
+ async function put(input){if(!RW)throw RO;
+  const r=await fetch(API,{method:"POST",body:JSON.stringify({k:KEY,op:"update",id:input.spreadsheetId,range:input.range,values:input.formulas||input.values||[]})});
+  if(!r.ok)throw {code:"network",message:"Không ghi được (HTTP "+r.status+"). Thử lại."};
+  const d=await r.json();if(d.error==="bad_key")badKey();
+  if(d.error)throw {code:d.error,message:d.message||("Không ghi được: "+d.error)};
+  lsDrop(input.spreadsheetId);
+  return {payload:{updatedRange:d.updatedRange||input.range,updatedRows:(input.formulas||input.values||[]).length},cache:{storedAt:d.at}};}
+ const W=new Set();
+ function run(w,fresh){get(w.input,r=>{if(w.on)w.h({type:"data",result:r});},fresh).then(r=>{if(w.on)w.h({type:"data",result:r});},e=>{if(w.on)w.h({type:"error",error:e});});}
+ const mcp={
+  async callTool(srv,tool,input,opts){
+   if(tool==="get_values")return get(input,null,!!(opts&&opts.cache===false));
+   if(tool==="update_formulas"||tool==="update_values")return put(input);
+   throw RO;},
+  watchTool(srv,tool,input,h){const w={input,h,on:true};if(tool!=="get_values"){setTimeout(()=>h({type:"error",error:RO}),0);return ()=>{};}W.add(w);run(w,false);return ()=>{w.on=false;W.delete(w);};},
+  async invalidate(srv,tool,input){W.forEach(w=>{if(!input||!input.spreadsheetId||w.input.spreadsheetId===input.spreadsheetId)run(w,true);});},
+  async describeTool(){throw {code:"unavailable"};}
+ };
+ /* đang mở trang: 10 phút đọc lại một lần */
+ setInterval(()=>{if(!document.hidden)W.forEach(w=>run(w,false));},10*60000);
+ /* Cài đặt dùng chung (số dư đầu kỳ ở Kế hoạch, ẩn cột/tuần ở Phân công): lưu ở trang _CaiDatApp của sheet chính */
+ async function setAll(){const r=await get({spreadsheetId:MAIN,range:SET_RANGE},null,true);const o={};(r.payload.values||[]).forEach(x=>{if(x&&x[0])o[x[0]]=x[1]||"";});return o;}
+ const db={doc(path){return {
+   async get(){if(!SET_ROW[path])return {exists:false,data:()=>undefined};const o=await setAll();const t=o[path];let v;try{v=t?JSON.parse(t):undefined}catch(e){v=undefined}return {exists:v!==undefined,data:()=>v};},
+   async set(v){const row=SET_ROW[path];if(!RW||!row)throw RO;await put({spreadsheetId:MAIN,range:"'_CaiDatApp'!A"+row+":B"+row,formulas:[[path,JSON.stringify(v)]]});},
+   async update(v){const row=SET_ROW[path];if(!RW||!row)throw RO;const o=await setAll();let cur={};try{cur=JSON.parse(o[path]||"{}")}catch(e){}await this.set(Object.assign(cur,v));}
+  };}};
+ const downloads={async save(o){const b=o.data instanceof Blob?o.data:new Blob([o.data]);const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=o.filename||"file";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);}};
+ window.claude={use:async n=>n==="mcp"?mcp:n==="downloads"?downloads:n==="db"?db:null};
+})();
+</script>
 
 
 <title>HBA Dự án & Nhân sự</title>
@@ -1028,24 +1092,16 @@ window.BR=(function(){
   [HR,"'Phep'!A5:Q200"],[HR,"'Import_NghiPhep'!A2:AF5000"],[HR,"'Import_TangCa'!A2:M5000"],[HR,"'ChamCong'!A1:I6000"],[HR,"'importrangeData'!A3:R9000"],[HR,"'Droplist'!C2:N300"],[HR,"'NgayNghi'!A1:B400"],
   [PLAN,"'TỔNG HỢP - DỰ ÁN'!A8:F300"]];
  const K=(id,r)=>id+"|"+r,ALLOW=new Set(NEED.map(n=>K(n[0],n[1])));
- let PUB=null,REC={},real=null,live=false,ro=false,canPub=true,busy=false,T=null;
+ let PUB=null,REC={},real=null,live=false,ro=false,canPub=!window.HBA_GH,busy=false,T=null;
  /* Bản GitHub: số liệu lấy trực tiếp từ Google Apps Script (chạy bằng tài khoản chủ app), mỗi lần mở là số mới. */
  const API_URL="https://script.google.com/macros/s/AKfycbyOy5O0ZO7AN3XScmxp8ZflWZSu8NqYOR-qd08TCJ1RIY5iS3yUF0xATiiFl8QvwR8N/exec";
  const API_KEY=new URLSearchParams(location.search).get("k")||"";
  let PUB_ERR="",PUB_TXT="";
  function pubFetch(){return fetch(API_URL+"?k="+encodeURIComponent(API_KEY)+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():Promise.reject("http"+r.status));}
- /* Mở là có số ngay: hiện số lần trước lưu trên máy này, đồng thời tải số mới; số mới khác thì tự làm mới trang. */
- const LSK="hba_tgd_"+API_KEY;
- function lsGet(){try{return localStorage.getItem(LSK)}catch(e){return null}}
- function lsSet(t){try{localStorage.setItem(LSK,t)}catch(e){}}
- function lsDel(){try{localStorage.removeItem(LSK)}catch(e){}}
- function applyPub(t){PUB_TXT=t;const d=JSON.parse(t);if(d&&d.error){if(d.error==="bad_key"){try{sessionStorage.removeItem("hba_pass")}catch(e){}}PUB_ERR=d.error;PUB=null;return false;}PUB=d&&d.rec&&d.at>0?d:null;if(!PUB)PUB_ERR="empty";return !!PUB;}
- const pubNet=pubFetch();
- const pubCached=lsGet();
- let pubFromCache=false;
- if(pubCached){try{pubFromCache=applyPub(pubCached)}catch(e){pubFromCache=false}if(!pubFromCache){PUB=null;PUB_ERR="";lsDel();}}
- const pubReady=pubFromCache?Promise.resolve():pubNet.then(t=>{if(applyPub(t))lsSet(t);}).catch(e=>{PUB_ERR=String(e||"net");});
- if(pubFromCache)pubNet.then(t=>{const d=JSON.parse(t);if(d&&d.error==="bad_key"){lsDel();try{sessionStorage.removeItem("hba_pass")}catch(e){}location.reload();return;}if(!(d&&d.rec&&d.at>0))return;lsSet(t);if(JSON.stringify(d.rec)!==JSON.stringify(PUB.rec))location.reload();else{PUB_TXT=t;PUB.at=d.at;}}).catch(()=>{});
+ /* bản GitHub: chỉ tải gói TGĐ khi đọc trực tiếp bị lỗi */
+ let _pr=null;function pubReadyF(){return _pr||(_pr=pubFetch().then(t=>{PUB_TXT=t;const d=JSON.parse(t);if(d&&d.error){PUB_ERR=d.error;return;}PUB=d&&d.rec&&d.at>0?d:null;if(!PUB)PUB_ERR="empty";}).catch(e=>{PUB_ERR=String(e||"net");}));}
+ const pubReady={then(a,b){return pubReadyF().then(a,b);}};
+ if(!window.HBA_GH)pubReadyF();
  /* đang mở trang: 10 phút kiểm tra một lần, số liệu đổi thì tải lại trang */
  setInterval(()=>{if(document.hidden||!PUB)return;pubFetch().then(t=>{if(t!==PUB_TXT){const d=JSON.parse(t);if(d&&d.rec)location.reload();}}).catch(()=>{});},10*60000);
  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&PUB&&Date.now()-PUB.at>10*60000)location.reload();});
@@ -1067,7 +1123,7 @@ window.BR=(function(){
    return ()=>{if(typeof stop==="function")stop();};},
   async invalidate(srv,tool,input){if(real&&live)return real.invalidate(srv,tool,input);}
  };
- async function mcp(c){let m=null;try{m=c&&c.use?await c.use("mcp"):null;}catch(e){m=null;}real=m;if(real)setTimeout(checkAll,2500);return M;}
+ async function mcp(c){let m=null;try{m=c&&c.use?await c.use("mcp"):null;}catch(e){m=null;}real=m;if(real&&!window.HBA_GH)setTimeout(checkAll,2500);return M;}
  /* chủ app: đọc đủ các bảng cần để biết bản TGĐ đang xem có cũ không */
  async function checkAll(){if(!real||ro)return;for(const n of NEED){if(REC[K(n[0],n[1])])continue;try{await M.callTool("Google Sheets","get_values",{spreadsheetId:n[0],range:n[1]},{cache:false});}catch(e){return;}}bar();}
  function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36)+"."+s.length;}
@@ -1090,7 +1146,7 @@ window.BR=(function(){
  /* bản chỉ đọc: chặn mọi thao tác sửa ở Phân công */
  const EDIT=["edit","save","add","add-col","add-week","add-name","rm","c-edit","c-save","np-open","np-save","pick"];
  document.addEventListener("click",ev=>{if(!ro)return;const t=ev.target.closest("[data-pc]");if(t&&EDIT.includes(t.dataset.pc)){ev.stopPropagation();ev.preventDefault();}},true);
- setInterval(()=>{if(real&&live&&!ro){NEED.forEach(n=>{delete REC[K(n[0],n[1])];});checkAll();}},15*60000);
+ setInterval(()=>{if(real&&live&&!ro&&!window.HBA_GH){NEED.forEach(n=>{delete REC[K(n[0],n[1])];});checkAll();}},15*60000);
  return {mcp};
 })();
 
