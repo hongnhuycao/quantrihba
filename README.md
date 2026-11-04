@@ -10,7 +10,3 @@ Trang TGĐ trên GitHub Pages: https://hongnhuycao.github.io/quantrihba/tgd.html
 - Số liệu không nằm trong repo. Trang lưu bản sao trên máy người xem để mở là có số ngay, số mới tải ngầm.
 - Số liệu lấy qua Google Apps Script "HBA TGD" (Ứng dụng web), chạy bằng tài khoản chủ app.
 - Trang quản trị đầy đủ (index.html) đã gỡ khỏi GitHub; dùng app trên claude.ai.
-
-## Bản thử: tgd-moi.html
-
-https://hongnhuycao.github.io/quantrihba/tgd-moi.html — giống tgd.html, chỉ khác: khi mở chỉ đọc 3 bảng của file hợp đồng (Quản trị dự án, Tên gọi nhân sự, HĐ CĐT) thay vì 14 bảng. Không tải Sổ thu chi, Đề nghị TT, Dự kiến dòng tiền… Dùng thử ổn thì thay vào tgd.html.
