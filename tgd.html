@@ -1015,7 +1015,7 @@ window.BR=(function(){
  const K=(id,r)=>id+"|"+r,ALLOW=new Set(NEED.map(n=>K(n[0],n[1])));
  let PUB=null,REC={},real=null,live=false,ro=false,canPub=true,busy=false,T=null;
  /* Bản GitHub: số liệu lấy trực tiếp từ Google Apps Script (chạy bằng tài khoản chủ app), mỗi lần mở là số mới. */
- const API_URL="DAN_LINK_WEB_APP_VAO_DAY";
+ const API_URL="https://script.google.com/macros/s/AKfycbyOy5O0ZO7AN3XScmxp8ZflWZSu8NqYOR-qd08TCJ1RIY5iS3yUF0xATiiFl8QvwR8N/exec";
  const API_KEY=new URLSearchParams(location.search).get("k")||"";
  let PUB_ERR="",PUB_TXT="";
  function pubFetch(){return fetch(API_URL+"?k="+encodeURIComponent(API_KEY)+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():Promise.reject("http"+r.status));}
