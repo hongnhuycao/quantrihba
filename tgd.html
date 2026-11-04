@@ -1,12 +1,16 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <script>
-/* Cổng mật khẩu: nhập 1 lần, máy này nhớ mật khẩu. Sau khi trang mở, đuôi ?k= được xóa khỏi thanh địa chỉ để chép link gửi đi không kèm mật khẩu. */
+/* Cổng mật khẩu: mỗi lần mở link đều phải nhập. Chỉ khi tải lại trong cùng một tab thì không hỏi lại.
+   Link có sẵn ?k= từ nơi khác cũng bị hỏi mật khẩu. Đuôi ?k= được xóa khỏi thanh địa chỉ sau khi trang mở. */
 (function(){var P="hba_pass",u=new URL(location.href),k=u.searchParams.get("k");
-function sv(v){try{localStorage.setItem(P,v)}catch(e){}}function gv(){try{return localStorage.getItem(P)}catch(e){return null}}
-if(k){sv(k);window.addEventListener("load",function(){setTimeout(function(){try{var x=new URL(location.href);x.searchParams.delete("k");history.replaceState(null,"",x.pathname+(x.search||"")+x.hash)}catch(e){}},1500)});return;}
-var m=gv();if(m){u.searchParams.set("k",m);location.replace(u.toString());document.write('<div style="position:fixed;inset:0;z-index:2147483647;background:#f2f4f5"></div>');return;}
-document.write('<div id="hba-gate" style="position:fixed;inset:0;z-index:2147483647;background:#f2f4f5;display:flex;align-items:center;justify-content:center;padding:16px;font:15px -apple-system,BlinkMacSystemFont,sans-serif"><form id="hba-gf" style="background:#fff;border:1px solid #dbe2e6;border-radius:14px;padding:24px;width:100%;max-width:320px;box-shadow:0 6px 24px rgba(0,0,0,.08)"><div style="font-weight:700;font-size:18px;color:#0e5c63;margin-bottom:4px">HBA Quản trị</div><div style="color:#4b5b67;margin-bottom:16px">Nhập mật khẩu để xem</div><input id="hba-gp" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Mật khẩu" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #dbe2e6;border-radius:10px;margin-bottom:12px" autofocus><button style="width:100%;padding:12px;font-size:16px;font-weight:600;border:0;border-radius:10px;background:#0e5c63;color:#fff;cursor:pointer">Vào</button></form></div>');
-document.getElementById("hba-gf").addEventListener("submit",function(e){e.preventDefault();var v=document.getElementById("hba-gp").value.trim();if(!v)return;u.searchParams.set("k",v);location.replace(u.toString());});
+try{localStorage.removeItem(P)}catch(e){}
+function sv(v){try{sessionStorage.setItem(P,v)}catch(e){}}function gv(){try{return sessionStorage.getItem(P)}catch(e){return null}}
+var m=gv();
+if(k&&m===k){window.addEventListener("load",function(){setTimeout(function(){try{var x=new URL(location.href);x.searchParams.delete("k");history.replaceState(null,"",x.pathname+(x.search||"")+x.hash)}catch(e){}},1500)});return;}
+if(m){u.searchParams.set("k",m);location.replace(u.toString());document.write('<div style="position:fixed;inset:0;z-index:2147483647;background:#f2f4f5"></div>');return;}
+if(k){u.searchParams.delete("k");try{history.replaceState(null,"",u.pathname+(u.search||"")+u.hash)}catch(e){}}
+document.write('<div id="hba-gate" style="position:fixed;inset:0;z-index:2147483647;background:#f2f4f5;display:flex;align-items:center;justify-content:center;padding:16px;font:15px -apple-system,BlinkMacSystemFont,sans-serif"><form id="hba-gf" style="background:#fff;border:1px solid #dbe2e6;border-radius:14px;padding:24px;width:100%;max-width:320px;box-shadow:0 6px 24px rgba(0,0,0,.08)"><div style="font-weight:700;font-size:18px;color:#0e5c63;margin-bottom:4px">HBA Quản trị</div><div style="color:#4b5b67;margin-bottom:16px">Nhập mật khẩu để xem</div><input id="hba-gp" type="password" inputmode="numeric" autocomplete="off" placeholder="Mật khẩu" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #dbe2e6;border-radius:10px;margin-bottom:12px" autofocus><button style="width:100%;padding:12px;font-size:16px;font-weight:600;border:0;border-radius:10px;background:#0e5c63;color:#fff;cursor:pointer">Vào</button></form></div>');
+document.getElementById("hba-gf").addEventListener("submit",function(e){e.preventDefault();var v=document.getElementById("hba-gp").value.trim();if(!v)return;sv(v);u.searchParams.set("k",v);location.replace(u.toString());});
 })();
 </script>
 
@@ -1035,13 +1039,13 @@ window.BR=(function(){
  function lsGet(){try{return localStorage.getItem(LSK)}catch(e){return null}}
  function lsSet(t){try{localStorage.setItem(LSK,t)}catch(e){}}
  function lsDel(){try{localStorage.removeItem(LSK)}catch(e){}}
- function applyPub(t){PUB_TXT=t;const d=JSON.parse(t);if(d&&d.error){if(d.error==="bad_key"){try{localStorage.removeItem("hba_pass")}catch(e){}}PUB_ERR=d.error;PUB=null;return false;}PUB=d&&d.rec&&d.at>0?d:null;if(!PUB)PUB_ERR="empty";return !!PUB;}
+ function applyPub(t){PUB_TXT=t;const d=JSON.parse(t);if(d&&d.error){if(d.error==="bad_key"){try{sessionStorage.removeItem("hba_pass")}catch(e){}}PUB_ERR=d.error;PUB=null;return false;}PUB=d&&d.rec&&d.at>0?d:null;if(!PUB)PUB_ERR="empty";return !!PUB;}
  const pubNet=pubFetch();
  const pubCached=lsGet();
  let pubFromCache=false;
  if(pubCached){try{pubFromCache=applyPub(pubCached)}catch(e){pubFromCache=false}if(!pubFromCache){PUB=null;PUB_ERR="";lsDel();}}
  const pubReady=pubFromCache?Promise.resolve():pubNet.then(t=>{if(applyPub(t))lsSet(t);}).catch(e=>{PUB_ERR=String(e||"net");});
- if(pubFromCache)pubNet.then(t=>{const d=JSON.parse(t);if(d&&d.error==="bad_key"){lsDel();try{localStorage.removeItem("hba_pass")}catch(e){}location.reload();return;}if(!(d&&d.rec&&d.at>0))return;lsSet(t);if(JSON.stringify(d.rec)!==JSON.stringify(PUB.rec))location.reload();else{PUB_TXT=t;PUB.at=d.at;}}).catch(()=>{});
+ if(pubFromCache)pubNet.then(t=>{const d=JSON.parse(t);if(d&&d.error==="bad_key"){lsDel();try{sessionStorage.removeItem("hba_pass")}catch(e){}location.reload();return;}if(!(d&&d.rec&&d.at>0))return;lsSet(t);if(JSON.stringify(d.rec)!==JSON.stringify(PUB.rec))location.reload();else{PUB_TXT=t;PUB.at=d.at;}}).catch(()=>{});
  /* đang mở trang: 10 phút kiểm tra một lần, số liệu đổi thì tải lại trang */
  setInterval(()=>{if(document.hidden||!PUB)return;pubFetch().then(t=>{if(t!==PUB_TXT){const d=JSON.parse(t);if(d&&d.rec)location.reload();}}).catch(()=>{});},10*60000);
  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&PUB&&Date.now()-PUB.at>10*60000)location.reload();});
