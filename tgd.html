@@ -26,11 +26,30 @@ document.getElementById("hba-gf").addEventListener("submit",function(e){e.preven
  const RO={code:"read_only",message:"Link này chỉ xem. Muốn sửa hoặc ghi sổ, mở app trên claude.ai."};
  window.HBA_GH=true;
  function badKey(){try{sessionStorage.removeItem("hba_pass")}catch(e){}}
- /* bộ nhớ trên máy: mở là có số ngay */
- const LSP="hba_idx_"+KEY+"_";
- function lsGet(k){try{const t=localStorage.getItem(LSP+k);return t?JSON.parse(t):null}catch(e){return null}}
- function lsSet(k,r){try{localStorage.setItem(LSP+k,JSON.stringify(r))}catch(e){}}
- function lsDrop(id){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(LSP+id+"|")===0)ks.push(k);}ks.forEach(k=>localStorage.removeItem(k));}catch(e){}}
+ /* bộ nhớ trên máy (IndexedDB, chứa được cả bảng lớn): mở là có số ngay, số mới tải ngầm */
+ const LSP="hba_idx_"+KEY+"_",MEM=new Map();
+ const IDB=new Promise(res=>{try{const o=indexedDB.open("hba_cache",1);o.onupgradeneeded=()=>{try{o.result.createObjectStore("kv")}catch(e){}};o.onsuccess=()=>res(o.result);o.onerror=()=>res(null);o.onblocked=()=>res(null);}catch(e){res(null)}});
+ function idb(mode,fn){return IDB.then(db=>db?new Promise(r=>{try{const q=fn(db.transaction("kv",mode).objectStore("kv"));q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);}catch(e){r(null)}}):null);}
+ async function lsGet(k){if(MEM.has(k))return MEM.get(k);let v=await idb("readonly",s=>s.get(LSP+k));if(!v){try{const t=localStorage.getItem(LSP+k);v=t?JSON.parse(t):null}catch(e){v=null}}if(v&&!MEM.has(k))MEM.set(k,v);return MEM.get(k)||null;}
+ function lsSet(k,r){MEM.set(k,r);idb("readwrite",s=>s.put(r,LSP+k));try{localStorage.removeItem(LSP+k)}catch(e){}}
+ function lsDel(k){MEM.delete(k);idb("readwrite",s=>s.delete(LSP+k));try{localStorage.removeItem(LSP+k)}catch(e){}}
+ function colN(t){let n=0;for(const ch of t)n=n*26+ch.charCodeAt(0)-64;return n-1;}
+ function a1(r){const m=/^(?:'((?:[^']|'')+)'|([^!]+))!\$?([A-Z]+)\$?(\d*)(?::\$?([A-Z]+)\$?(\d*))?$/.exec(String(r||"").trim());if(!m)return null;
+  const sh=m[1]!=null?m[1].replace(/''/g,"'"):m[2].trim(),c0=colN(m[3]),r0=m[4]?+m[4]:1;
+  return m[5]?{sh,c0,r0,c1:colN(m[5]),r1:m[6]?+m[6]:1e9}:{sh,c0,r0,c1:c0,r1:m[4]?r0:1e9};}
+ /* sau khi ghi: sửa thẳng bản lưu trên máy (không xóa cả bộ nhớ nữa) để lần mở sau vẫn có số ngay */
+ async function lsPatch(id,range,rows){const w=a1(range),pre=id+"|",ks=new Set();
+  MEM.forEach((v,k)=>{if(k.indexOf(pre)===0)ks.add(k);});
+  const all=await idb("readonly",s=>s.getAllKeys());(all||[]).forEach(k=>{if(typeof k==="string"&&k.indexOf(LSP+pre)===0)ks.add(k.slice(LSP.length));});
+  for(const k of ks){const c=await lsGet(k);if(!c||!c.payload){lsDel(k);continue;}
+   const g=a1(c.payload.range||k.slice(pre.length));if(!w||!g){lsDel(k);continue;}if(g.sh!==w.sh)continue;
+   let bad=false,hit=false;const V=(c.payload.values||[]).map(r=>Array.isArray(r)?r.slice():[]);
+   rows.forEach((row,i)=>(row||[]).forEach((x,j)=>{const R=w.r0+i,C=w.c0+j;if(R<g.r0||R>g.r1||C<g.c0||C>g.c1)return;hit=true;
+    let t=x==null?"":String(x);if(/^=/.test(t)){bad=true;return;}if(t[0]==="'")t=t.slice(1);
+    const ri=R-g.r0,ci=C-g.c0;while(V.length<=ri)V.push([]);while(V[ri].length<ci)V[ri].push("");V[ri][ci]=t;}));
+   if(!hit)continue;if(bad){lsDel(k);continue;}
+   lsSet(k,{...c,payload:{...c.payload,values:V}});}}
+ window.HBA_C=(id,range)=>lsGet(id+"|"+range).then(c=>c&&c.payload?(c.payload.values||[]):null);
  /* đọc: gom nhiều vùng vào một lần gọi */
  let Q=[],T=null;
  function flush(){const q=Q;Q=[];T=null;
@@ -42,20 +61,21 @@ document.getElementById("hba-gf").addEventListener("submit",function(e){e.preven
        part.forEach((x,j)=>{const r=d.res&&d.res[j];if(!r||r.error)x.no({code:(r&&r.error)||"tool_error",message:(r&&r.message)||"Không đọc được vùng "+x.range});else x.ok({payload:{range:r.range,values:r.values},cache:{storedAt:d.at}});});})
      .catch(e=>{const err=e&&e.code?e:{code:"network",message:"Không kết nối được, kiểm tra mạng rồi tải lại trang."};part.forEach(x=>x.no(err));});}});}
  function net(input,nc){return new Promise((ok,no)=>{Q.push({id:input.spreadsheetId,range:input.range,nc,ok,no});if(!T)T=setTimeout(flush,40);});}
- function get(input,onNew,fresh){const k=input.spreadsheetId+"|"+input.range,c=fresh?null:lsGet(k),p=net(input,fresh).then(r=>{lsSet(k,r);return r;});
-  if(!c)return p;
-  p.then(r=>{if(onNew&&JSON.stringify(r.payload.values)!==JSON.stringify(c.payload.values))onNew(r);}).catch(()=>{});
-  return Promise.resolve(c);}
+ function get(input,onNew,fresh){const k=input.spreadsheetId+"|"+input.range,p=net(input,fresh).then(r=>{lsSet(k,r);return r;});
+  if(fresh)return p;
+  return lsGet(k).then(c=>{if(!c||!c.payload)return p;
+   p.then(r=>{if(onNew&&JSON.stringify(r.payload.values)!==JSON.stringify(c.payload.values))onNew(r);}).catch(()=>{});
+   return c;});}
  /* ghi */
  async function put(input){if(!RW)throw RO;
   const r=await fetch(API,{method:"POST",body:JSON.stringify({k:KEY,op:"update",id:input.spreadsheetId,range:input.range,values:input.formulas||input.values||[]})});
   if(!r.ok)throw {code:"network",message:"Không ghi được (HTTP "+r.status+"). Thử lại."};
   const d=await r.json();if(d.error==="bad_key")badKey();
   if(d.error)throw {code:d.error,message:d.message||("Không ghi được: "+d.error)};
-  lsDrop(input.spreadsheetId);
+  lsPatch(input.spreadsheetId,input.range,input.formulas||input.values||[]).catch(()=>{});
   return {payload:{updatedRange:d.updatedRange||input.range,updatedRows:(input.formulas||input.values||[]).length},cache:{storedAt:d.at}};}
  const W=new Set();
- function run(w,fresh){get(w.input,r=>{if(w.on)w.h({type:"data",result:r});},fresh).then(r=>{if(w.on)w.h({type:"data",result:r});},e=>{if(w.on)w.h({type:"error",error:e});});}
+ function run(w,fresh){if(fresh)lsGet(w.input.spreadsheetId+"|"+w.input.range).then(c=>{if(c&&c.payload&&w.on)w.h({type:"data",result:c});});get(w.input,r=>{if(w.on)w.h({type:"data",result:r});},fresh).then(r=>{if(w.on)w.h({type:"data",result:r});},e=>{if(w.on)w.h({type:"error",error:e});});}
  const mcp={
   async callTool(srv,tool,input,opts){
    if(tool==="get_values")return get(input,null,!!(opts&&opts.cache===false));
@@ -2326,9 +2346,13 @@ const HR_SID="1lcZyYSNUoGdEsaYTXqi7rblJw-IzDB5aF7dVIQgHLVE",HR_URL="https://docs
 const HR_RANGES={phep:"'Phep'!A5:Q200",nghi:"'Import_NghiPhep'!A2:AF5000",tc:"'Import_TangCa'!A2:M5000",cc:"'ChamCong'!A1:I6000",task:"'importrangeData'!A3:R9000",droplist:"'Droplist'!C2:N300",ngaynghi:"'NgayNghi'!A1:B400"};
 const HR_LATE="08:00",HR_NO_CC=["Nguyễn Lâm Thế Quân","Nguyễn Minh Ngọc","Vũ Ngọc Tuấn"]/* không dùng máy chấm công */;
 S.ns=S.ns||{data:{},loading:false,err:null,tried:false,month:"",tab:"mx",per:""};
-async function nsLoad(){if(!mcp||S.ns.loading)return;S.ns.loading=true;S.ns.tried=true;S.ns.err=null;render();
- for(const k of Object.keys(HR_RANGES)){try{S.ns.data[k]=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:HR_SID,range:HR_RANGES[k]},{cache:false}));}catch(e){S.ns.err=e;break;}}
- S.ns.loading=false;S.ns.at=Date.now();render();}
+async function nsLoad(){if(!mcp||S.ns.inf)return;S.ns.inf=true;S.ns.tried=true;S.ns.err=null;const ks=Object.keys(HR_RANGES);
+ if(window.HBA_C&&!ks.every(k=>S.ns.data[k])){try{const C=await Promise.all(ks.map(k=>window.HBA_C(HR_SID,HR_RANGES[k])));if(C.every(Boolean))ks.forEach((k,i)=>{S.ns.data[k]=C[i];});}catch(e){}}
+ const have=ks.every(k=>S.ns.data[k]);S.ns.loading=!have;render();
+ const R=await Promise.all(ks.map(k=>mcp.callTool(SRV,"get_values",{spreadsheetId:HR_SID,range:HR_RANGES[k]},{cache:false}).then(r=>({k,v:vals(r)}),e=>({k,e}))));
+ let err=null,ch=false;R.forEach(x=>{if(x.e){err=err||x.e;return;}if(!have||JSON.stringify(x.v)!==JSON.stringify(S.ns.data[x.k])){S.ns.data[x.k]=x.v;ch=true;}});
+ if(err&&!have)S.ns.err=err;else if(err)toast("Chưa tải được số mới, đang hiện số lần trước.");
+ S.ns.inf=false;S.ns.loading=false;S.ns.at=Date.now();if(ch||!have||err)render();}
 function nsKey(n){return String(n||"").replace(/^\s*\d+\s*_/,"").replace(/\s+/g," ").trim().toLowerCase();}
 function nsShow(n){return String(n||"").replace(/^\s*\d+\s*_/,"").replace(/\s+/g," ").trim();}
 function nsDate(s){s=String(s||"").trim();let m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s);if(m)return new Date(+m[1],+m[2]-1,+m[3]);return dmy(s);}
@@ -2821,9 +2845,11 @@ const WK_SID="1AcxL3QKN_x9PfEGFEDibV9daDh_Mrvvdm-iF2OSdHlw",WK_URL="https://docs
 /* tên cột trong file → mã dự án (cùng mã với phiếu công việc / file kế hoạch) */
 const WK_COLMAP=[[/stella\s*69/i,"VVK"],[/hh2/i,"HH2"],[/joy/i,"JOY"],[/bitis/i,"BTB"],[/vịnh đầm/i,"A32"],[/đại nhật\s*b/i,"DNB"],[/đại nhật\s*a/i,"DNA"],[/nơ trang long/i,"NTL"],[/cảnh quan/i,"CQ"],[/dự án khác/i,"KHAC"]];
 S.wk=S.wk||{data:null,loading:false,err:null,tried:false};
-async function wkLoad(force){if(!mcp||S.wk.loading)return;if(S.wk.data&&!force)return;S.wk.loading=true;S.wk.tried=true;S.wk.err=null;
- try{S.wk.data=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:WK_RANGE},{cache:false}));}catch(e){S.wk.err=e;}
- S.wk.loading=false;render();}
+async function wkLoad(force){if(!mcp||S.wk.inf)return;if(S.wk.data&&!force)return;S.wk.inf=true;S.wk.tried=true;S.wk.err=null;
+ if(!S.wk.data&&window.HBA_C){try{const c=await window.HBA_C(WK_SID,WK_RANGE);if(c&&!S.wk.data)S.wk.data=c;}catch(e){}}
+ const have=!!S.wk.data;S.wk.loading=!have;render();
+ try{const v=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:WK_RANGE},{cache:false}));if(!PCN&&(!have||JSON.stringify(v)!==JSON.stringify(S.wk.data)))S.wk.data=v;}catch(e){if(!have)S.wk.err=e;}
+ S.wk.inf=false;S.wk.loading=false;render();}
 function wkEnsure(){if(mcp&&!S.wk.tried&&!S.wk.loading)setTimeout(()=>wkLoad(),0);}
 /* tên gọi ngắn → họ tên đầy đủ (theo bảng phép); không chắc thì giữ tên ngắn */
 function wkPeople(){const L=STAFF_WK().map(p=>p.ten);return L.length?L:NS_NV().map(v=>nsShow(v.ten));}
@@ -2936,6 +2962,8 @@ function vPhanCong(){wkEnsure();nsEnsure();
  return h;}
 /* Lưu ngay: cập nhật bảng trên màn hình trước, ghi vào file GĐDA ở nền (xếp hàng lần lượt). Lỗi thì báo và tải lại. */
 let PCQ=Promise.resolve(),PCN=0;
+/* việc ghi chạy nền: màn hình đổi ngay, Sheet ghi sau; lỗi thì báo và tải lại số thật */
+function pcJob(fn,okMsg){PCN++;pcPend();PCQ=PCQ.then(fn).then(()=>{PCN--;pcPend();if(okMsg&&!PCN)toast(okMsg);},e=>{PCN--;pcPend();toast(e&&e.code==="x"?e.message:errText(e,true));wkLoad(true);});}
 function pcLocal(row,col,v){const D=S.wk.data;if(!D)return;while(D.length<row)D.push([]);const r=D[row-1]||(D[row-1]=[]);while(r.length<=col)r.push("");r[col]=v;}
 function pcBg(w,list,okMsg){/* list: [{row,col,value,what}] */
  list.forEach(x=>pcLocal(x.row,x.col,x.value));PCN++;pcPend();
@@ -2943,9 +2971,8 @@ function pcBg(w,list,okMsg){/* list: [{row,col,value,what}] */
  PCQ=PCQ.then(async()=>{needMcp();
   const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+lrow},{cache:false}));
   if(g(chk[0],0).trim()!==label)throw {code:"x",message:"File vừa có thay đổi (dòng tuần không còn ở vị trí cũ), chưa ghi được. App đã tải lại, bạn làm lại nhé."};
-  for(const x of list){const L=pcCol(x.col),v=String(x.value||"");
-   await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+x.row,formulas:[[/^[=+\-@]/.test(v)?"'"+v:v]]});
-   logW("Lịch tuần GĐDA "+L+x.row+(x.what?" ("+x.what+")":""),[[v]]);}
+  await Promise.all(list.map(x=>{const L=pcCol(x.col),v=String(x.value||"");
+   return mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+x.row,formulas:[[/^[=+\-@]/.test(v)?"'"+v:v]]}).then(()=>logW("Lịch tuần GĐDA "+L+x.row+(x.what?" ("+x.what+")":""),[[v]]));}));
  }).then(()=>{PCN--;pcPend();if(!PCN&&okMsg)toast(okMsg);},e=>{PCN--;pcPend();toast(e&&e.code==="x"?e.message:errText(e,true));wkLoad(true);});
  render();}
 function pcPend(){let b=document.getElementById("pc-pend");if(!b){b=document.createElement("div");b.id="pc-pend";b.style.cssText="position:fixed;right:14px;bottom:14px;z-index:60;background:var(--card,#fff);border:1px solid var(--line,#ccd);border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)";document.body.appendChild(b);}
@@ -2967,25 +2994,18 @@ function pcDel(key){const [wi,ci]=key.split(":").map(Number);const P=wkRows(),w=
 function pcColName(q,code){const H=HD().find(h=>h.ma===q.ma);let n=(H&&H.ten)||kxName(q.ma);const parts=n.split(/\s+[–-]\s+/);n=parts[parts.length-1].trim();if(n===n.toUpperCase())n=n.toLowerCase().replace(/(^|\s)(\S)/g,(m,p,c)=>p+c.toUpperCase());if(n.length>34)n=kxName(q.ma);return n+" ("+code+")";}
 async function pcAddCol(ma){const P=wkRows(),q=QTDA().find(x=>x.ma===ma);if(!q||!q.hr)return;const code=String(q.hr).toUpperCase().split(/[,;\s]+/)[0];
  const c=Math.max(...P.cols.map(x=>x.c))+1;if(c>24){toast("File đã dùng hết cột A–Y, thêm cột trực tiếp trong file nhé.");return;}
- const L=pcCol(c),hr=P.leadRow-1,name=pcColName(q,code),lead=q.gdda||planLeadFor(ma)||"";
- S.pc.busy=true;render();
- try{needMcp();const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+"1:"+L+(P.lastRow+5)},{cache:false}));
-  if(chk.some(r=>String(r[0]||"").trim()))throw {code:"x",message:"Cột "+L+" trong file không trống, app không ghi đè."};
-  const hd=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+hr},{cache:false}));
+ const L=pcCol(c),hr=P.leadRow-1,name=pcColName(q,code),lead=q.gdda||planLeadFor(ma)||"";if(!mcp){toast(errText({code:"read_only"},true));return;}
+ pcLocal(hr,c,name);pcLocal(hr+1,c,lead);toast("Đã thêm cột "+name);render();
+ pcJob(async()=>{needMcp();const [chk,hd]=await Promise.all([mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+"1:"+L+(P.lastRow+5)},{cache:false}).then(vals),mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+hr},{cache:false}).then(vals)]);
+  if(chk.some(r=>String(r[0]||"").trim())){if(g(chk[hr-1],0).trim()===name)return;throw {code:"x",message:"Cột "+L+" trong file không trống, app không ghi đè. App đã tải lại."};}
   if(!/^thời gian$/i.test(g(hd[0],0).trim()))throw {code:"x",message:"File vừa thay đổi bố cục, app đã tải lại. Thử lại nhé."};
-  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+hr+":"+L+(hr+1),formulas:[[name],[lead]]});logW("Lịch tuần GĐDA "+L+hr,[[name],[lead]]);
-  toast("Đã thêm cột "+name);}
- catch(e){toast(e&&e.code==="x"?e.message:errText(e,true));}
- S.pc.busy=false;await wkLoad(true);}
+  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+hr+":"+L+(hr+1),formulas:[[name],[lead]]});logW("Lịch tuần GĐDA "+L+hr,[[name],[lead]]);},"Đã ghi xong vào file của Giám đốc dự án");}
 async function pcAddWeek(){const P=wkRows(),last=P.weeks[P.weeks.length-1];const d=addD(last.d,7),e=addD(d,5);const lab=nsDd(d)+" - "+nsDd(e);
- const r=Math.max(P.lastRow,(last.prow||last.row))+1;
- S.pc.busy=true;render();
- try{needMcp();const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+r+":Y"+(r+1)},{cache:false}));
-  if(chk.some(row=>row.some(x=>String(x).trim())))throw {code:"x",message:"Dòng "+r+"–"+(r+1)+" trong file không trống, app không ghi đè. Thêm tuần trực tiếp trong file nhé."};
-  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+r,formulas:[["'"+lab]]});logW("Lịch tuần GĐDA A"+r,[[lab]]);
-  toast("Đã thêm tuần "+lab);S.pc.wk=P.weeks.length;}
- catch(e){toast(e&&e.code==="x"?e.message:errText(e,true));}
- S.pc.busy=false;await wkLoad(true);}
+ const r=Math.max(P.lastRow,(last.prow||last.row))+1;if(!mcp){toast(errText({code:"read_only"},true));return;}
+ pcLocal(r,0,lab);S.pc.wk=P.weeks.length;toast("Đã thêm tuần "+lab);render();
+ pcJob(async()=>{needMcp();const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+r+":Y"+(r+1)},{cache:false}));
+  if(chk.some(row=>row.some(x=>String(x).trim()))){if(g(chk[0],0).trim()===lab)return;throw {code:"x",message:"Dòng "+r+"–"+(r+1)+" trong file không trống, app không ghi đè. Thêm tuần trực tiếp trong file nhé."};}
+  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+r,formulas:[["'"+lab]]});logW("Lịch tuần GĐDA A"+r,[[lab]]);},"Đã ghi xong vào file của Giám đốc dự án");}
 document.addEventListener("click",ev=>{const t=ev.target.closest("[data-pc]");if(!t)return;const a=t.dataset.pc;
  if(a==="wk"){S.pc.wk=Math.max(0,(S.pc.wk||0)+(+t.dataset.d));S.pc.edit="";render();}
  else if(a==="edit"){S.pc.edit=t.dataset.k;if(S.kx)S.kx.noKeep=true;render();setTimeout(()=>{const e=document.getElementById("pcf-nd");if(e)e.focus();},0);}
@@ -3075,15 +3095,12 @@ async function pcNewProject(){const name=((document.getElementById("pcn-name")||
  const P=wkRows(),c=Math.max(...P.cols.map(x=>x.c))+1;if(c>24){toast("File đã dùng hết cột A–Y, thêm cột trực tiếp trong file nhé.");return;}
  if(P.cols.some(x=>x.name.toLowerCase()===name.toLowerCase()||(code&&x.code===code))){toast("Dự án này đã có cột trong file.");return;}
  const L=pcCol(c),hr=P.leadRow-1,title=code?name+" ("+code+")":name;
- S.pc.busy=true;render();
- try{needMcp();const chk=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+"1:"+L+(P.lastRow+5)},{cache:false}));
-  if(chk.some(r=>String(r[0]||"").trim()))throw {code:"x",message:"Cột "+L+" trong file không trống, app không ghi đè."};
-  const hd=vals(await mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+hr},{cache:false}));
+ if(!mcp){toast(errText({code:"read_only"},true));return;}
+ pcLocal(hr,c,title);pcLocal(hr+1,c,lead);S.pc.np=false;toast("Đã thêm dự án "+title);render();
+ pcJob(async()=>{needMcp();const [chk,hd]=await Promise.all([mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+"1:"+L+(P.lastRow+5)},{cache:false}).then(vals),mcp.callTool(SRV,"get_values",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!A"+hr},{cache:false}).then(vals)]);
+  if(chk.some(r=>String(r[0]||"").trim())){if(g(chk[hr-1],0).trim()===title)return;throw {code:"x",message:"Cột "+L+" trong file không trống, app không ghi đè. App đã tải lại."};}
   if(!/^thời gian$/i.test(g(hd[0],0).trim()))throw {code:"x",message:"File vừa thay đổi bố cục, app đã tải lại. Thử lại nhé."};
-  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+hr+":"+L+(hr+1),formulas:[[title],[lead]]});logW("Lịch tuần GĐDA "+L+hr+" (thêm dự án)",[[title],[lead]]);
-  S.pc.np=false;toast("Đã thêm dự án "+title);}
- catch(e){toast(e&&e.code==="x"?e.message:errText(e,true));}
- S.pc.busy=false;await wkLoad(true);}
+  await mcp.callTool(SRV,"update_formulas",{spreadsheetId:WK_SID,range:"'nhân sự HBA'!"+L+hr+":"+L+(hr+1),formulas:[[title],[lead]]});logW("Lịch tuần GĐDA "+L+hr+" (thêm dự án)",[[title],[lead]]);},"Đã ghi xong vào file của Giám đốc dự án");}
 document.addEventListener("click",ev=>{const t=ev.target.closest("[data-pc]");if(!t)return;const a=t.dataset.pc;
  if(a==="hide-col"){S.pc.hide.cols=[...new Set(S.pc.hide.cols.concat(t.dataset.n))];render();pcHideSave();toast("Đã ẩn "+t.dataset.n+" (dữ liệu trong file vẫn giữ nguyên)");}
  else if(a==="hide-wk"){S.pc.hide.weeks=[...new Set(S.pc.hide.weeks.concat(t.dataset.n))];render();pcHideSave();}
