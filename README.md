@@ -14,3 +14,7 @@ Trang TGĐ trên GitHub Pages: https://hongnhuycao.github.io/quantrihba/tgd.html
 ## Công cụ Claude cho Excel
 
 Thư mục [`claude-excel/`](claude-excel/) chứa module VBA để gọi Claude ngay trong Excel: hàm `=CLAUDE()`, macro hỏi về bảng đang chọn, macro xử lý hàng loạt. Xem [HUONG_DAN.md](claude-excel/HUONG_DAN.md).
+
+## Công cụ Claude cho Google Sheets
+
+Thư mục [`claude-sheets/`](claude-sheets/) chứa bản Apps Script cho Google Sheets: hàm `=CLAUDE()` và menu 🤖 Claude. Xem [HUONG_DAN.md](claude-sheets/HUONG_DAN.md).
