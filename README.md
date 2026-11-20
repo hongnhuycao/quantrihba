@@ -10,3 +10,7 @@ Trang TGĐ trên GitHub Pages: https://hongnhuycao.github.io/quantrihba/tgd.html
 - Số liệu không nằm trong repo. Trang lưu bản sao trên máy người xem để mở là có số ngay, số mới tải ngầm.
 - Số liệu lấy qua Google Apps Script "HBA TGD" (Ứng dụng web), chạy bằng tài khoản chủ app.
 - Trang quản trị đầy đủ (index.html) đã gỡ khỏi GitHub; dùng app trên claude.ai.
+
+## Công cụ Claude cho Excel
+
+Thư mục [`claude-excel/`](claude-excel/) chứa module VBA để gọi Claude ngay trong Excel: hàm `=CLAUDE()`, macro hỏi về bảng đang chọn, macro xử lý hàng loạt. Xem [HUONG_DAN.md](claude-excel/HUONG_DAN.md).
