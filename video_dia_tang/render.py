@@ -22,59 +22,96 @@ IMG = {
 
 # ---------- scenes: (key, t0, t1, (cx,cy,zoom) start, end, fx, look) ; coords in source px (~941x1670)
 S = [
-    ("lotus", 0, 15, (470, 900, 1.00), (475, 930, 1.22), "gold", "open"),
-    ("temple", 15, 33, (470, 1000, 1.05), (520, 1150, 1.35), "gold", ""),
-    ("cry", 33, 51, (470, 900, 1.05), (440, 1010, 1.55), "dust", ""),
-    ("sea", 51, 70, (300, 950, 1.30), (560, 1000, 1.10), "ember", ""),
-    ("king", 70, 88, (470, 950, 1.05), (600, 980, 1.30), "ember", ""),
-    ("heaven", 88, 107, (520, 900, 1.25), (470, 880, 1.02), "petal", "glow"),
-    ("monk", 107, 124, (470, 1000, 1.05), (480, 1080, 1.30), "dust", ""),
-    ("baby", 124, 141, (500, 1100, 1.10), (640, 1150, 1.45), "dust", ""),
-    ("buddha", 141, 158, (470, 900, 1.02), (560, 950, 1.25), "petal", "glow"),
-    ("kings", 158, 175, (470, 1000, 1.25), (470, 960, 1.03), "gold", ""),
-    ("dz", 175, 196, (470, 600, 1.90), (470, 900, 1.00), "gold", "glow"),
-    ("dzc", 196, 214, (520, 900, 1.05), (560, 800, 1.30), "gold", "glow"),
-    ("cry", 214, 220, (450, 1000, 1.45), (440, 1020, 1.60), "dust", "memory"),
-    ("sea", 220, 226, (300, 900, 1.40), (330, 900, 1.55), "ember", "memory"),
-    ("heaven", 226, 232, (450, 950, 1.20), (420, 980, 1.40), "petal", "memory"),
-    ("baby", 232, 238, (620, 1150, 1.40), (680, 1180, 1.65), "dust", "memory"),
-    ("dz", 238, 256.5, (470, 950, 1.00), (470, 640, 1.70), "gold", "climax"),
-    ("lotus", 256.5, DUR, (475, 930, 1.22), (475, 900, 1.05), "gold", "end"),
+    ("lotus", 0, 14, (470, 900, 1.00), (475, 930, 1.22), "gold", "open"),
+    ("temple", 14, 34, (470, 1000, 1.05), (420, 1150, 1.40), "gold", ""),
+    ("cry", 34, 54, (470, 900, 1.05), (440, 1010, 1.55), "dust", ""),
+    ("sea", 54, 70, (300, 950, 1.30), (580, 1000, 1.10), "ember", ""),
+    ("king", 70, 81, (300, 900, 1.25), (470, 950, 1.02), "ember", ""),
+    ("dz", 81, 99, (470, 600, 1.90), (470, 900, 1.00), "gold", "chorus"),
+    ("dzc", 99, 109, (500, 900, 1.05), (560, 820, 1.25), "gold", "chorus"),
+    ("heaven", 109, 119.5, (520, 900, 1.25), (470, 880, 1.02), "petal", "glow"),
+    ("monk", 119.5, 127, (470, 1000, 1.05), (420, 1060, 1.30), "dust", ""),
+    ("baby", 127, 138, (500, 1100, 1.10), (660, 1150, 1.50), "dust", ""),
+    ("buddha", 138, 158.5, (470, 900, 1.02), (560, 900, 1.30), "petal", "glow"),
+    ("cry", 158.5, 168, (450, 980, 1.35), (440, 1030, 1.70), "dust", "memory"),
+    ("kings", 168, 179, (470, 1000, 1.25), (470, 960, 1.03), "gold", ""),
+    ("dz", 179, 197, (470, 950, 1.00), (470, 640, 1.60), "gold", "climax"),
+    ("dzc", 197, 206, (560, 820, 1.30), (520, 900, 1.05), "gold", "chorus"),
+    ("cry", 206, 210, (450, 1000, 1.45), (440, 1020, 1.60), "dust", "memory"),
+    ("monk", 210, 214, (470, 1050, 1.25), (480, 1080, 1.40), "dust", "memory"),
+    ("heaven", 214, 220.5, (450, 950, 1.20), (420, 980, 1.40), "petal", "memory"),
+    ("dzc", 220.5, 240, (520, 950, 1.00), (590, 780, 1.45), "gold", "glow"),
+    ("dz", 240, 254, (470, 900, 1.00), (470, 760, 1.25), "gold", "climax"),
+    ("lotus", 254, DUR, (475, 930, 1.22), (475, 900, 1.05), "gold", "end"),
 ]
 XF = 0.8  # half crossfade
 
-# ---------- captions: (t0, t1, text, style)
-C = [
-    (2.5, 13.5, "ĐỊA TẠNG VƯƠNG\nĐẠI NGUYỆN", "title"),
-    (6.0, 13.5, "— Lời Nguyện Cuối —", "sub"),
-    (16.5, 24.0, "Thuở xưa, có một người con gái\nhiếu hạnh…", "cap"),
-    (24.5, 32.0, "ngày đêm quỳ trước Phật,\ncầu cho mẹ hiền.", "cap"),
-    (34.5, 42.0, "Mẹ nàng một đời gieo nghiệp,\nlìa trần về nơi tăm tối.", "cap"),
-    (42.5, 50.0, "Giọt lệ con rơi,\nthấm vào từng nén hương khuya.", "cap"),
-    (52.5, 60.5, "Nương tâm niệm Phật,\nnàng đến bên bờ biển nghiệp…", "cap"),
-    (61.0, 69.0, "nơi muôn người chìm trong\nsóng lửa khổ đau.", "cap"),
-    (71.5, 79.0, "Quỷ vương Vô Độc chắp tay thưa:", "cap"),
-    (79.5, 87.0, "“Thánh nữ chớ sầu,\nthân mẫu người\nđã sinh về cõi trời.”", "quote"),
-    (89.5, 97.5, "Mẹ đã an lành…", "cap"),
-    (98.0, 106.0, "nước mắt con giờ hoá thành hoa.", "cap"),
-    (108.5, 116.0, "Một kiếp khác, nàng là Quang Mục,", "cap"),
-    (116.5, 123.0, "dâng cơm cúng dường,\nnguyện cứu mẹ thoát khổ.", "cap"),
-    (125.5, 133.0, "Đứa trẻ vừa chào đời đã cất tiếng:", "cap"),
-    (133.5, 140.0, "“Con ơi… mẹ đây.”", "quote"),
-    (142.5, 150.0, "Nàng quỳ trước Phật, phát lời đại nguyện:", "cap"),
-    (150.5, 157.0, "“Trăm nghìn muôn kiếp,\ncon nguyện cứu khổ chúng sinh.”", "quote"),
-    (159.5, 166.5, "Có vị vua nguyện thành Phật\nđể độ người,", "cap"),
-    (167.0, 174.0, "có vị nguyện độ hết chúng sinh\nrồi mới thành Phật.", "cap"),
-    (177.0, 185.5, "Bao kiếp luân hồi,\nmột tấm lòng không đổi…", "cap"),
-    (186.0, 195.0, "Ngài là\nĐịa Tạng Vương Bồ Tát.", "big"),
-    (197.5, 205.0, "Tích trượng mở cửa địa ngục,", "cap"),
-    (205.5, 213.0, "minh châu soi sáng mọi nẻo tối tăm.", "cap"),
-    (215.0, 225.0, "Từ giọt lệ của một người con…", "cap"),
-    (226.0, 237.0, "đã thành đại nguyện\ncứu khổ muôn loài.", "cap"),
-    (239.5, 247.5, "“Địa ngục chưa trống,\nthề không thành Phật.”", "vow"),
-    (248.0, 256.0, "“Chúng sinh độ tận,\nphương chứng Bồ Đề.”", "vow"),
-    (257.5, DUR - 0.3, "Nam mô Đại Nguyện\nĐịa Tạng Vương Bồ Tát", "title2"),
+L = [  # lyrics (start, text) ; each shows until next start
+    (30, "Bà-la-môn nữ thương mẹ vô vàn"),
+    (34, "Trước đài Đức Phật\nlệ tràn chứa chan"),
+    (41, "Mẹ qua đời, lòng con đau xót"),
+    (45, "Dâng hết gia tài\ncúng Phật thành tâm"),
+    (50, "Nguyện cho mẹ thoát chốn tối tăm"),
+    (54, "Nương nhờ công đức\nlìa vòng khổ đau"),
+    (61, "Nhìn chúng sinh trong miền tăm tối"),
+    (66, "Nghe tiếng than vang khắp ngục sâu"),
+    (70, "Nàng phát đại nguyện nhiệm mầu"),
+    (74, "Cứu muôn loài thoát\nbể sầu trầm luân"),
+    (81, "!Địa Tạng Vương ơi!\nĐịa Tạng Vương ơi!"),
+    (85, "!Ngàn đời đại nguyện sáng ngời!"),
+    (89, "!“Địa ngục vị không,\nthệ bất thành Phật”"),
+    (95, "!“Chúng sinh độ tận,\nphương chứng Bồ Đề”"),
+    (99, "!Địa Tạng Vương ơi!\nĐịa Tạng Vương ơi!"),
+    (104, "!Tích trượng trong tay,\nminh châu sáng ngời"),
+    (109, "!Dẫu qua muôn kiếp luân hồi"),
+    (113, "!Ngài còn cứu khổ\nchẳng rời chúng sinh"),
+    (120, "Một đời khác, nàng tên Quang Mục"),
+    (124, "Thương mẹ hiền\nchịu cảnh đọa đày"),
+    (129, "Trước Phật thành kính đêm ngày"),
+    (133, "Phát tâm cứu độ\nmuôn loài khổ đau"),
+    (138, "Từ lòng hiếu hóa thành đại nguyện"),
+    (142, "Từ tình thương soi sáng hằng sa"),
+    (147, "Dẫu qua vô lượng thời gian"),
+    (151, "Tâm Ngài vẫn vẹn\nmuôn ngàn từ bi"),
+    (159, "~Ai còn cha mẹ trên đời…"),
+    (162, "~Xin thương, xin hiếu,\nđừng lời muộn màng"),
+    (168, "Nguyện cho muôn loài bình an"),
+    (172, "Bước theo ánh đạo"),
+    (174, "Vượt ngàn khổ đau"),
+    (179, "!Địa Tạng Vương ơi!\nĐịa Tạng Vương ơi!"),
+    (183, "!Ngàn đời đại nguyện\nsáng ngời từ bi"),
+    (187, "!“Địa ngục vị không,\nthệ bất thành Phật”"),
+    (192, "!“Chúng sinh độ tận,\nphương chứng Bồ Đề”"),
+    (197, "!Địa Tạng Vương ơi!\nĐịa Tạng Vương ơi!"),
+    (201, "!Tích trượng trong tay,\nminh châu sáng ngời"),
+    (206, "!Dẫu qua muôn kiếp luân hồi"),
+    (210, "!Ngài còn cứu khổ"),
+    (214, "!Chẳng rời chúng sinh"),
+    (221, "!Nam mô Đại Nguyện\nĐịa Tạng Vương Bồ Tát"),
+    (231, "Xin đem lòng sáng\ngửi khắp muôn phương"),
+    (235, "Nguyện cho người gặp\nnẻo lành an vui"),
+    (240, "!Nam mô Đại Nguyện\nĐịa Tạng Vương Bồ Tát"),
+    (251, None),
 ]
+C = [
+    (2.5, 12.8, "ĐỊA TẠNG VƯƠNG\nĐẠI NGUYỆN", "title"),
+    (5.5, 12.8, "— Lời Nguyện Cuối —", "sub"),
+    (16.5, 28.8, "Thuở xưa, có một người con gái\nhiếu hạnh…", "narr"),
+    (254.5, DUR - 0.3, "Nam mô Đại Nguyện\nĐịa Tạng Vương Bồ Tát", "title2"),
+]
+for i in range(len(L) - 1):
+    t0, tx = L[i]
+    t1 = L[i + 1][0]
+    if tx is None:
+        continue
+    st = "lyric"
+    if tx.startswith("!"):
+        st, tx = "chorus", tx[1:]
+        if "Địa Tạng Vương ơi" in tx:
+            st = "cry_out"
+    elif tx.startswith("~"):
+        st, tx = "bridge", tx[1:]
+    C.append((t0 - 0.25, min(t1 - 0.35, t0 + 9.5), tx, st))
 
 INK = (74, 42, 24)
 GOLD = (150, 92, 20)
@@ -254,6 +291,14 @@ def render_text(text, style):
         font, col, sp = ImageFont.truetype(FONT_T, 78), (128, 60, 18), 20
     elif style == "vow":
         font, col, sp = ImageFont.truetype(FONT_T, 70), (120, 40, 12), 22
+    elif style == "cry_out":
+        font, col, sp = ImageFont.truetype(FONT_T, 84), (140, 58, 8), 24
+    elif style == "chorus":
+        font, col, sp = ImageFont.truetype(FONT_T, 64), (124, 50, 14), 22
+    elif style == "bridge":
+        font, col, sp = ImageFont.truetype(FONT_I, 64), (92, 40, 22), 22
+    elif style == "narr":
+        font, col, sp = ImageFont.truetype(FONT_I, 52), (100, 60, 36), 18
     elif style == "quote":
         font, col, sp = ImageFont.truetype(FONT_I, 56), (96, 44, 22), 18
     else:
@@ -301,7 +346,7 @@ def render_text(text, style):
         tw = font.getlength(ln)
         x, y = W / 2 - tw / 2, pad + i * lh
         d.text((x, y), ln, font=font, fill=col + (255,))
-    if style in ("title", "title2", "vow", "big"):
+    if style in ("title", "title2", "vow", "big", "cry_out"):
         # gold underline ornament
         y = pad + th + 4
         d.line((W / 2 - 120, y, W / 2 + 120, y), fill=(190, 130, 40, 220), width=3)
@@ -344,8 +389,8 @@ def scene_frame(i, t, f):
         sep = np.concatenate([g * 1.05, g * 0.93, g * 0.78], 2)
         fr = fr * 0.35 + sep * 0.65
         fr = fr * 0.92 + 0.06
-    if look in ("glow", "climax", "open", "end"):
-        amt = {"glow": 0.18, "climax": 0.22, "open": 0.10, "end": 0.12}[look]
+    if look in ("glow", "climax", "open", "end", "chorus"):
+        amt = {"glow": 0.18, "climax": 0.24, "open": 0.10, "end": 0.12, "chorus": 0.20}[look]
         amt = amt * (0.6 + 0.6 * slow) + (0.25 if look == "climax" else 0.1) * fast
         gm = glow_map(key) * amt
         fr = 1 - (1 - fr) * (1 - gm)
@@ -377,6 +422,10 @@ def frame(f):
             k = (1 - dt / 1.2) ** 2 * (0.10 if S[i][6] == "memory" else 0.16)
             leak = radial(W * (0.85 if i % 2 else 0.15), H * 0.3, H * 0.8)[..., None] * np.array([1, .7, .4], np.float32)
             fr = 1 - (1 - fr) * (1 - leak * k)
+    for (c0, c1, txt, st) in C:
+        if st == "cry_out" and c0 <= t <= c0 + 3.5:
+            k = math.exp(-(t - c0) * 1.3) * 0.32 * ease((t - c0) / 0.25)
+            fr = 1 - (1 - fr) * (1 - glow_map("burst") * k)
     img = Image.fromarray((np.clip(fr, 0, 1) * 255).astype(np.uint8), "RGB").convert("RGBA")
     # particles
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -387,7 +436,8 @@ def frame(f):
     for (c0, c1, txt, st) in C:
         if c0 - 0.1 <= t <= c1 + 0.1:
             fi = 1.0 if st == "title" and False else 1.0
-            a = min(ease((t - c0) / 1.0), ease((c1 - t) / 0.9))
+            fin = 1.0 if st in ("title", "sub", "title2", "narr") else 0.45
+            a = min(ease((t - c0) / fin), ease((c1 - t) / 0.5))
             if a <= 0:
                 continue
             ti = render_text(txt, st)
