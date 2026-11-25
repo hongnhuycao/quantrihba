@@ -22,6 +22,7 @@ MODES = [
     ("chu", "T Thêm chữ"),
     ("anh", "🖼 Ảnh / Chữ ký"),
     ("che", "▭ Che trắng"),
+    ("suascan", "✎ Sửa chữ scan"),
     ("tosang", "🖍 Tô sáng"),
     ("khung", "□ Khung"),
     ("ghichu", "🗨 Ghi chú"),
@@ -32,6 +33,8 @@ HINTS = {
     "anh": "Kéo chuột để vẽ khung, rồi chọn ảnh/chữ ký (PNG nền trong suốt đẹp nhất).",
     "che": "Kéo chuột quanh vùng cần xoá: nội dung bên dưới bị xoá hẳn và phủ trắng.",
     "tosang": "Kéo chuột quanh dòng chữ cần tô sáng.",
+    "suascan": "Kéo khung quanh chữ cần sửa trên bản scan: chữ cũ được che bằng màu giấy, "
+               "chữ mới viết cùng cỡ & màu mực.",
     "khung": "Kéo chuột để vẽ khung chữ nhật.",
     "ghichu": "Bấm vào trang để gắn ghi chú.",
 }
@@ -40,9 +43,9 @@ HINTS = {
 class TextDialog(tk.Toplevel):
     """Hộp thoại nhập chữ: nội dung, phông, cỡ, màu."""
 
-    def __init__(self, master, fonts, state):
+    def __init__(self, master, fonts, state, title="Thêm chữ", initial="", auto_size=False, note=None):
         super().__init__(master)
-        self.title("Thêm chữ")
+        self.title(title)
         self.transient(master)
         self.resizable(False, False)
         self.result = None
@@ -52,6 +55,9 @@ class TextDialog(tk.Toplevel):
         ttk.Label(f, text="Nội dung (có thể nhiều dòng):").grid(row=0, column=0, columnspan=4, sticky="w")
         self.txt = tk.Text(f, width=46, height=5, font=("Arial", 12))
         self.txt.grid(row=1, column=0, columnspan=4, pady=(4, 8))
+        if initial:
+            self.txt.insert("1.0", initial)
+            self.txt.tag_add("sel", "1.0", "end-1c")
         ttk.Label(f, text="Phông:").grid(row=2, column=0, sticky="w")
         self.font = ttk.Combobox(f, values=list(fonts), state="readonly", width=24)
         self.font.set(state["font"])
@@ -60,8 +66,16 @@ class TextDialog(tk.Toplevel):
         self.size = ttk.Spinbox(f, from_=5, to=120, width=5)
         self.size.set(state["size"])
         self.size.grid(row=2, column=3, sticky="w")
-        self.cbtn = tk.Button(f, text="  Màu chữ  ", bg=self.color, fg="white", command=self.pick)
-        self.cbtn.grid(row=3, column=0, pady=10, sticky="w")
+        self.auto = tk.BooleanVar(value=auto_size)
+        if auto_size:
+            ttk.Checkbutton(f, text="Cỡ & màu tự động (khớp chữ cũ trên bản scan)",
+                            variable=self.auto).grid(row=4, column=0, columnspan=4, sticky="w")
+        else:
+            self.cbtn = tk.Button(f, text="  Màu chữ  ", bg=self.color, fg="white", command=self.pick)
+            self.cbtn.grid(row=3, column=0, pady=10, sticky="w")
+        if note:
+            ttk.Label(f, text=note, foreground="#666", wraplength=420, justify="left").grid(
+                row=5, column=0, columnspan=4, sticky="w", pady=(6, 0))
         b = ttk.Frame(f)
         b.grid(row=3, column=1, columnspan=3, sticky="e")
         ttk.Button(b, text="Huỷ", command=self.destroy).pack(side="right")
@@ -86,7 +100,8 @@ class TextDialog(tk.Toplevel):
             size = float(self.size.get())
         except ValueError:
             size = 12
-        self.result = dict(text=text, font=self.font.get(), size=size, color=self.color)
+        self.result = dict(text=text, font=self.font.get(), size=size, color=self.color,
+                           auto=self.auto.get())
         self.destroy()
 
 
@@ -108,16 +123,21 @@ class ReplaceDialog(tk.Toplevel):
         ttk.Checkbutton(f, text="Phân biệt chữ hoa/thường", variable=self.case).grid(row=2, column=1, sticky="w")
         self.cur_only = tk.BooleanVar(value=False)
         ttk.Checkbutton(f, text="Chỉ trang đang xem", variable=self.cur_only).grid(row=3, column=1, sticky="w")
-        ttk.Label(f, foreground="#666", wraplength=380, justify="left",
-                  text="Lưu ý: dòng có chữ được thay sẽ viết lại bằng phông đang chọn trên thanh công cụ. "
-                       "Với PDF scan (ảnh chụp) thì không thay được chữ.").grid(row=4, column=0, columnspan=2,
-                                                                                 pady=6, sticky="w")
+        self.keep = tk.BooleanVar(value=True)
+        ttk.Checkbutton(f, text="Giữ phông chữ gốc của tài liệu", variable=self.keep).grid(row=4, column=1,
+                                                                                             sticky="w")
+        ttk.Label(f, foreground="#666", wraplength=400, justify="left",
+                  text="• Phông gốc: dùng lại phông nhúng trong PDF, hoặc phông cùng tên trên máy "
+                       "(Times New Roman, Arial…). Nếu không có mới dùng phông đang chọn.\n"
+                       "• Bản scan: cần chạy 'Nhận dạng chữ (OCR)' trước; chữ mới viết bằng phông "
+                       "đang chọn, tự khớp cỡ & màu mực.").grid(row=5, column=0, columnspan=2,
+                                                                 pady=6, sticky="w")
         b = ttk.Frame(f)
-        b.grid(row=5, column=0, columnspan=2, sticky="e")
+        b.grid(row=6, column=0, columnspan=2, sticky="e")
         ttk.Button(b, text="Đóng", command=self.destroy).pack(side="right")
         ttk.Button(b, text="Thay tất cả",
                    command=lambda: on_replace(self.find.get(), self.repl.get(), self.case.get(),
-                                              self.cur_only.get())).pack(side="right", padx=6)
+                                              self.cur_only.get(), self.keep.get())).pack(side="right", padx=6)
         self.find.focus_set()
         self.bind("<Escape>", lambda e: self.destroy())
 
@@ -180,6 +200,7 @@ class App:
         e.add_command(label="Làm lại", accelerator="Ctrl+Y", command=self.redo)
         e.add_separator()
         e.add_command(label="Tìm & thay chữ…", accelerator="Ctrl+H", command=self.replace_dialog)
+        e.add_command(label="Nhận dạng chữ bản scan (OCR)…", command=self.ocr)
         e.add_command(label="Tô sáng mọi chỗ có chữ…", command=self.highlight_all)
         e.add_command(label="Đóng dấu chìm (watermark)…", command=self.watermark)
         e.add_command(label="Đánh số trang…", command=self.page_numbers)
@@ -490,7 +511,8 @@ class App:
             self.add_note_at(*self.c2v(cx, cy))
             return
         self.drag_start = (cx, cy)
-        col = {"che": "#d00", "tosang": "#e6b800", "anh": "#06c", "khung": self.state["color"]}[mode]
+        col = {"che": "#d00", "tosang": "#e6b800", "anh": "#06c", "khung": self.state["color"],
+               "suascan": "#0a0"}[mode]
         self.drag_item = self.canvas.create_rectangle(cx, cy, cx, cy, outline=col, width=2, dash=(4, 2))
 
     def on_drag(self, e):
@@ -530,6 +552,8 @@ class App:
                 self.snapshot()
                 core.whiteout(page(), rect)
                 self.changed("Đã xoá & che trắng vùng chọn.")
+            elif mode == "suascan":
+                self.scan_edit_at(rect)
             elif mode == "tosang":
                 self.snapshot()
                 core.highlight(page(), rect)
@@ -556,6 +580,70 @@ class App:
         except Exception as ex:  # noqa: BLE001
             self.undo_stack.pop()
             messagebox.showerror(APP, f"Không thêm được chữ:\n{ex}")
+
+    def scan_edit_at(self, rect):
+        page = self.doc[self.cur]
+        old = core.text_in_rect(page, rect)
+        note = ("Chữ cũ (nhận dạng được): “" + old + "”") if old else \
+            "Mẹo: chạy Nhận dạng chữ (OCR) trước để phần mềm đọc được chữ cũ, khớp cỡ chữ chuẩn hơn."
+        d = TextDialog(self.root, self.fonts, self.state, title="Sửa chữ trên bản scan",
+                       initial=old, auto_size=True, note=note)
+        if not d.result:
+            return
+        r = d.result
+        self.state.update(font=r["font"])
+        self.font_box.set(r["font"])
+        self.snapshot()
+        try:
+            core.scan_edit(page, rect, r["text"], self.fonts[r["font"]],
+                           size=None if r["auto"] else r["size"], old_text=old or None)
+            self.changed("Đã sửa chữ trên bản scan. (Ctrl+Z để hoàn tác)")
+        except Exception as ex:  # noqa: BLE001
+            self.undo_stack.pop()
+            messagebox.showerror(APP, f"Không sửa được:\n{ex}")
+
+    def ocr(self):
+        if not self.need_doc():
+            return
+        td = core.find_tessdata()
+        if not td:
+            messagebox.showinfo(APP, (
+                "Chưa cài phần mềm nhận dạng chữ Tesseract OCR (miễn phí).\n\n"
+                "Cách cài trên Windows:\n"
+                "1. Tải bộ cài tại: github.com/UB-Mannheim/tesseract/wiki\n"
+                "2. Khi cài, ở mục 'Additional language data' tích chọn Vietnamese.\n"
+                "3. Cài vào thư mục mặc định, rồi mở lại phần mềm này."))
+            return
+        langs = core.ocr_languages(td)
+        if "vie" not in langs:
+            messagebox.showwarning(APP, "Tesseract chưa có gói tiếng Việt (vie). Hãy cài lại Tesseract và "
+                                        "tích chọn Vietnamese.\nTạm thời sẽ nhận dạng bằng tiếng Anh.")
+        lang = "vie" if "vie" in langs else "eng"
+        todo = [i for i, p in enumerate(self.doc) if not p.get_text().strip()]
+        if not todo:
+            messagebox.showinfo(APP, "Tất cả các trang đã có chữ — không cần nhận dạng.")
+            return
+        if not messagebox.askokcancel(APP, f"Nhận dạng chữ cho {len(todo)} trang scan?\n"
+                                           "(khoảng 1–3 giây mỗi trang)"):
+            return
+        self.snapshot()
+        self.root.config(cursor="watch")
+
+        def prog(k, n):
+            self.set_status(f"Đang nhận dạng chữ… trang {min(k + 1, n)}/{n}")
+            self.root.update()
+        try:
+            n = core.ocr_pages(self.doc, todo, lang=lang, fontfile=self.fonts[self.state["font"]], progress=prog)
+        except Exception as ex:  # noqa: BLE001
+            self.undo_stack.pop()
+            messagebox.showerror(APP, f"Lỗi nhận dạng:\n{ex}")
+            return
+        finally:
+            self.root.config(cursor="")
+        self.changed(f"Đã nhận dạng {n} trang. Giờ có thể tìm, chép và thay chữ trên bản scan.")
+        messagebox.showinfo(APP, f"Đã nhận dạng chữ cho {n} trang.\n\n"
+                                 "Giờ bạn có thể:\n• Tìm kiếm, sao chép chữ\n"
+                                 "• Tìm & thay chữ (Ctrl+H)\n• Dùng công cụ ✎ Sửa chữ scan")
 
     def add_note_at(self, x, y):
         t = simpledialog.askstring("Ghi chú", "Nội dung ghi chú:", parent=self.root)
@@ -610,8 +698,8 @@ class App:
         self.update_ui()
         self.root.after(50, self.fit_width)
         if not any(p.get_text().strip() for p in doc):
-            self.set_status("Lưu ý: tệp này có vẻ là bản scan (ảnh), không sửa/tìm chữ được — "
-                            "vẫn thêm chữ, ảnh, che trắng bình thường.")
+            self.set_status("Tệp này là bản scan (ảnh). Dùng Chỉnh sửa → Nhận dạng chữ (OCR) để tìm/thay chữ, "
+                            "hoặc công cụ ✎ Sửa chữ scan để sửa trực tiếp.")
 
     def _write(self, path, **kw):
         data = self.doc.tobytes(garbage=3, deflate=True, **kw)
@@ -853,23 +941,36 @@ class App:
         if self.need_doc():
             ReplaceDialog(self.root, self.do_replace)
 
-    def do_replace(self, find, repl, case, cur_only):
+    def do_replace(self, find, repl, case, cur_only, keep_font=True):
         if not find:
             return
         self.snapshot()
         try:
-            n = core.replace_text(self.doc, find, repl, pages=[self.cur] if cur_only else None,
-                                  fontfile=self.fonts[self.state["font"]], match_case=case)
+            n, st = core.replace_text(self.doc, find, repl, pages=[self.cur] if cur_only else None,
+                                      fontfile=self.fonts[self.state["font"]], match_case=case,
+                                      keep_font=keep_font)
         except Exception as ex:  # noqa: BLE001
             self.undo_stack.pop()
             messagebox.showerror(APP, f"Lỗi khi thay chữ:\n{ex}")
             return
         if n:
             self.changed(f"Đã thay {n} chỗ “{find}” → “{repl}”.")
-            messagebox.showinfo(APP, f"Đã thay {n} chỗ.")
+            parts = []
+            if st.get("goc"):
+                parts.append(f"{st['goc']} đoạn dùng đúng phông nhúng trong PDF")
+            if st.get("tuong_tu"):
+                parts.append(f"{st['tuong_tu']} đoạn dùng phông cùng tên trên máy")
+            if st.get("du_phong"):
+                parts.append(f"{st['du_phong']} đoạn dùng phông “{self.state['font']}” "
+                             "(máy không có phông gốc)")
+            extra = ("\n\nPhông chữ:\n• " + "\n• ".join(parts)) if parts else ""
+            messagebox.showinfo(APP, f"Đã thay {n} chỗ.{extra}")
         else:
             self.undo_stack.pop()
-            messagebox.showinfo(APP, f"Không tìm thấy “{find}”.")
+            hint = ""
+            if core.is_scanned_page(self.doc[self.cur]) and not self.doc[self.cur].get_text().strip():
+                hint = "\n\nTrang này là bản scan: hãy chạy Chỉnh sửa → Nhận dạng chữ (OCR) trước."
+            messagebox.showinfo(APP, f"Không tìm thấy “{find}”.{hint}")
 
     def search_next(self):
         if not self.need_doc():
@@ -947,6 +1048,8 @@ class App:
             "   – Ảnh/Chữ ký: kéo khung rồi chọn ảnh.\n"
             "   – Che trắng: kéo quanh vùng cần xoá.\n"
             "   – Tô sáng / Khung: kéo chuột.\n"
+            "   – Sửa chữ scan: kéo khung quanh chữ trên bản scan, gõ chữ mới.\n"
+            "• Bản scan: Chỉnh sửa → Nhận dạng chữ (OCR) để tìm/thay chữ.\n"
             "• Sửa chữ có sẵn: Chỉnh sửa → Tìm & thay chữ (Ctrl+H).\n"
             "• Trang: chọn trang ở cột trái (Ctrl/Shift chọn nhiều) → xoay, xoá, di chuyển.\n"
             "• Gộp / tách / nén / đặt mật khẩu: menu Tệp và Trang.\n\n"
